@@ -1,0 +1,528 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  color: white;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.backButton {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.errorMessage {
+  background: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid #f44336;
+}
+
+.closeError {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #c62828;
+}
+
+.formContainer {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.formGroup small {
+  color: #666;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  display: block;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.statsSection {
+  border: 2px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fafafa;
+}
+
+.statsSection h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.formActions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.cancelButton {
+  background: #f5f5f5;
+  color: #666;
+  border: 2px solid #ddd;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+
+.submitButton {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.submitButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loadingCard, .errorCard {
+  background: white;
+  border-radius: 15px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  max-width: 400px;
+  margin: 100px auto;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorCard h2 {
+  color: #c62828;
+  margin-bottom: 10px;
+}
+
+.errorCard p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.button {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .formContainer {
+    padding: 20px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Skills Section Styles */
+.skillsSection {
+  margin-top: 20px;
+}
+
+.skillsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.skillsHeader h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.skillsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.skillTypeSection {
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 20px;
+  background: #fafafa;
+}
+
+.skillTypeSection h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.skillTypeSection input,
+.skillTypeSection textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.skillTypeSection textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.skillTypeSection input:focus,
+.skillTypeSection textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.skillInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inputGroup label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.inputGroup input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+/* Effects Section Styles */
+.effectsSection {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.effectsSection h5 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.effectsGroup {
+  margin-bottom: 15px;
+}
+
+.effectsGroup h6 {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.effectsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.effectCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.effectCheckbox:hover {
+  background: #f0f0f0;
+  border-color: #667eea;
+}
+
+.effectCheckbox input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.specialEffectsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.specialEffectInput {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.specialEffectInput label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.specialEffectInput input {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.specialEffectInput input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+/* Buff Effects Grid */
+.buffEffectsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.buffEffectInput {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.buffEffectInput label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.buffEffectInput input {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.buffEffectInput input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+/* Responsive for skills */
+@media (max-width: 768px) {
+  .skillsHeader {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+} 

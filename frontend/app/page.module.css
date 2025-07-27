@@ -1,0 +1,2366 @@
+/* ========================================
+   MAIN CONTAINER & LAYOUT
+   ======================================== */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  font-family: 'Arial', sans-serif;
+  padding: 20px;
+}
+
+/* ========================================
+   GAME FRAME STRUCTURE
+   ======================================== */
+
+.gameFrame {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 50%, #e6e6e6 100%);
+  min-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Arial', sans-serif;
+  color: #111111;
+  margin: 0 auto;
+  width: 90%;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.centralGameFrame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  position: absolute;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.gamePlayArea {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ========================================
+   GAME INTERFACE BARS
+   ======================================== */
+
+/* Top Bar */
+.gameTopBar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 2rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  border-radius: 20px 20px 0 0;
+  margin: 0;
+  height: 60px;
+}
+
+.topBarLeft, .topBarRight {
+  display: flex;
+  align-items: center;
+}
+
+/* Bottom Bar */
+.gameBottomBar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 2rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  border-radius: 0 0 20px 20px;
+  height: 60px;
+}
+
+.bottomBarLeft, .bottomBarRight {
+  display: flex;
+  align-items: center;
+}
+
+/* ========================================
+   GAME BUTTONS
+   ======================================== */
+
+.profileButton, .questButton, .petsButton, .storageButton, .shopButton {
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.profileButton:hover, .questButton:hover, .petsButton:hover, .storageButton:hover, .shopButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.profileIcon, .questIcon, .petsIcon, .storageIcon, .shopIcon {
+  font-size: 1.3rem;
+}
+
+/* ========================================
+   MAIN GAME AREA
+   ======================================== */
+
+.gameMainArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+  background: white;
+  border-radius: 0 0 20px 20px;
+  margin: 0;
+  position: relative;
+}
+
+.gamePlaceholder {
+  text-align: center;
+  background: white;
+  padding: 3rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+}
+
+.gamePlaceholder h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.gamePlaceholder p {
+  margin: 0;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* ========================================
+   AUTHENTICATION FORMS
+   ======================================== */
+
+.authForm {
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 2rem;
+  margin-top: 2rem;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.authForm h3 {
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  font-size: 1.5rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  font-size: 1rem;
+}
+
+.formGroup input::placeholder {
+  color: #6c757d;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.submitButton, .cancelButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.submitButton {
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  color: white;
+}
+
+.cancelButton {
+  background: #6c757d;
+  color: white;
+  border: 1px solid #6c757d;
+}
+
+.submitButton:hover, .cancelButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========================================
+   FORM SWITCHING
+   ======================================== */
+
+.switchForm {
+  margin-top: 1rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.switchButton {
+  background: none;
+  border: none;
+  color: #4CAF50;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+}
+
+.switchButton:hover {
+  color: #45a049;
+}
+
+/* ========================================
+   ERROR MESSAGES
+   ======================================== */
+
+.errorMessage {
+  background: #ffebee;
+  color: #c62828;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #ffcdd2;
+  font-size: 0.9rem;
+}
+
+/* ========================================
+   LOGIN FORM
+   ======================================== */
+
+.loginForm {
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.welcomeButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.loginButton, .registerButton {
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.loginButton {
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  color: white;
+}
+
+.registerButton {
+  background: linear-gradient(45deg, #2196F3, #03A9F4);
+  color: white;
+}
+
+.loginButton:hover, .registerButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   MODAL SYSTEM
+   ======================================== */
+
+.modalOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  border-radius: 15px;
+}
+
+/* Profile Modal Specific */
+.profileModalOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  border-radius: 15px;
+  padding-left: 0;
+}
+
+.profileModal, .questModal, .petsModal, .shopModal {
+  background: white;
+  border-radius: 15px;
+  padding: 0;
+  max-width: 350px;
+  width: 85%;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.profileModal {
+  animation: profileModalSlideIn 0.4s ease;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 0 15px 15px 0;
+  margin: 0;
+}
+
+.profileModalClosing {
+  animation: profileModalSlideOut 0.4s ease;
+}
+
+.profileModal .modalHeader {
+  border-radius: 0 15px 0 0;
+}
+
+.modalHeader {
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  color: white;
+  padding: 1.25rem;
+  border-radius: 15px 15px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.storageButton {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.storageButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ========================================
+   PROFILE MODAL CONTENT
+   ======================================== */
+
+.profileContent {
+  padding: 1.5rem;
+}
+
+.profileAvatar {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 2rem;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.profileAvatar h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.profileStats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.statRow span:first-child {
+  color: #666;
+}
+
+.statRow span:last-child {
+  color: #333;
+}
+
+/* ========================================
+   QUEST MODAL CONTENT
+   ======================================== */
+
+.questContent {
+  padding: 1.5rem;
+}
+
+.questItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.questItem:hover {
+  background: #f1f8e9;
+  border-color: #4CAF50;
+}
+
+.questItem .questIcon {
+  font-size: 1.5rem;
+  width: 40px;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+.questInfo {
+  flex: 1;
+}
+
+.questInfo h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.questInfo p {
+  margin: 0 0 0.75rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.questProgress {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+  padding: 0.5rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* ========================================
+   PETS MODAL CONTENT
+   ======================================== */
+
+.petsContent {
+  padding: 1.5rem;
+}
+
+.petsContent .petCard {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.petsContent .petCard:hover {
+  background: #f1f8e9;
+  border-color: #4CAF50;
+}
+
+.petsContent .petImage {
+  position: relative;
+  text-align: center;
+}
+
+.petsContent .petImage img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.petsContent .petLevel {
+  position: absolute;
+  bottom: -5px;
+  right: 50%;
+  transform: translateX(50%);
+  background: #ff6b6b;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.petsContent .petInfo h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.petsContent .petStats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* ========================================
+   NEW PETS MODAL LAYOUT
+   ======================================== */
+
+.petsModal {
+  background: white;
+  border-radius: 15px;
+  padding: 0;
+  max-width: 100%;
+  width: 90%;
+  max-height: 85vh;
+  height: 100%;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.petsModalContent {
+  padding: 0;
+  height: calc(100% - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.petsTopSection {
+  display: flex;
+  height: 65%;
+  min-height: 400px;
+}
+
+.petDisplayArea {
+  flex: 1;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-right: 2px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.petDisplay {
+  text-align: center;
+  border: 4px solid #9e9e9e;
+  border-radius: 20px;
+  padding: 1.5rem;
+  background: white;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.petDisplayImage {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.petDisplayInfo h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 2rem;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.petElement, .petRarity {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.petDisplayPlaceholder {
+  text-align: center;
+  color: #666;
+  font-size: 1.3rem;
+  padding: 2rem;
+}
+
+.petInfoArea {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.petTabs {
+  display: flex;
+  border-bottom: 2px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.petTab {
+  flex: 1;
+  padding: 1.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: bold;
+  color: #666;
+  transition: all 0.3s ease;
+  border-bottom: 4px solid transparent;
+  font-size: 1.1rem;
+}
+
+.petTab:hover {
+  background: #f1f8e9;
+  color: #333;
+}
+
+.activeTab {
+  color: #4CAF50;
+  border-bottom-color: #4CAF50;
+  background: white;
+}
+
+.petTabContent {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.petStatsTab h4, .petUpgradeTab h4 {
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.petStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.petStatItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.petStatItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.petStatLabel {
+  color: #666;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.petStatValue {
+  color: #333;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.petUpgradeTab .upgradeInfo {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #90caf9;
+}
+
+.petUpgradeTab .upgradeInfo p {
+  margin: 0.75rem 0;
+  color: #1976d2;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.upgradeItems h5 {
+  margin: 0 0 1.25rem 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.upgradeItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.upgradeItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.upgradeItem span {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.useButton {
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.useButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.petListArea {
+  height: 45%;
+  min-height: 200px;
+  background: #f8f9fa;
+  border-top: 2px solid #e9ecef;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.petListArea h4 {
+  margin: 0 0 1.25rem 0;
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.petList {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 0.75rem;
+  padding: 1rem;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.petListItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border: 2px solid #e9ecef;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  width: 60px;
+  height: 60px;
+  justify-content: center;
+  position: relative;
+}
+
+.petListItem:hover {
+  border-color: #4caf50;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.selectedPet {
+  border-color: #4caf50;
+  background: #f1f8e9;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.petListImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e9ecef;
+  margin-bottom: 0.25rem;
+}
+
+.selectedPet .petListImage {
+  border-color: #4CAF50;
+}
+
+.petListInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.petListLevel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #4caf50;
+  background: #e8f5e8;
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.petListEmpty {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+/* ========================================
+   SHOP MODAL CONTENT
+   ======================================== */
+
+.shopContent {
+  padding: 1.5rem;
+}
+
+.shopContent .shopItem {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.shopContent .shopItem:hover {
+  background: #f1f8e9;
+  border-color: #4CAF50;
+}
+
+.shopContent .itemIcon {
+  font-size: 1.5rem;
+  width: 40px;
+  text-align: center;
+}
+
+.shopContent .itemInfo {
+  flex: 1;
+}
+
+.shopContent .itemInfo h4 {
+  margin: 0 0 0.25rem 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.shopContent .itemInfo p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.shopContent .buyButton {
+  background: linear-gradient(45deg, #4CAF50, #8BC34A);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.shopContent .buyButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+.loadingCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: white;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #ffd700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes profileModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes profileModalSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.emptySlot {
+  border: 2px dashed #ccc;
+  background: #f8f9fa;
+  cursor: default;
+}
+
+.emptySlot:hover {
+  border-color: #4caf50;
+  background: #f1f8e9;
+  transform: none;
+  box-shadow: none;
+}
+
+.emptySlotContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.plusIcon {
+  font-size: 1.5rem;
+  color: #ccc;
+  font-weight: bold;
+}
+
+.emptySlot:hover .plusIcon {
+  color: #4caf50;
+}
+
+/* ========================================
+   PETS MODAL ENHANCEMENTS
+   ======================================== */
+
+.bagInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-left: 15px;
+}
+
+.bagCount {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.bagStatus {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.petListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.loadingText {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.emptySlotText {
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 5px;
+}
+
+.petListName {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.emptyHint {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* ========================================
+   PET STATS HEADER & ACTIONS
+   ======================================== */
+
+.petStatsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.petStatsHeader h4 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+
+.petActions {
+  display: flex;
+  gap: 8px;
+}
+
+.moveToStorageBtn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+}
+
+.moveToStorageBtn:hover {
+  background: linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.4);
+}
+
+.moveToStorageBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.moveToBagBtn {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.moveToBagBtn:hover {
+  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+}
+
+.moveToBagBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ========================================
+   STORAGE MODAL - NEW DESIGN
+   ======================================== */
+
+.storageModal {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.storageModalHeader {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  position: relative;
+}
+
+.storageModalHeader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  pointer-events: none;
+}
+
+.storageHeaderContent {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  z-index: 1;
+  position: relative;
+}
+
+.storageTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.storageIcon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.storageTitle h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.storageBagStatus {
+  display: flex;
+  align-items: center;
+}
+
+.bagStatusCard {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.bagStatusIcon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.bagStatusInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bagStatusText {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.bagStatusCount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.bagStatusIndicator {
+  font-size: 1.2rem;
+  margin-left: 8px;
+}
+
+.storageCloseButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  z-index: 1;
+  position: relative;
+}
+
+.storageCloseButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.storageModalContent {
+  padding: 30px;
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
+}
+
+.storageOverview {
+  margin-bottom: 30px;
+}
+
+.storageStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.storageStatCard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.storageStatCard:hover {
+  transform: translateY(-2px);
+}
+
+.storageStatIcon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.storageStatInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.storageStatLabel {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.storageStatValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.storageDescription {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+  padding: 20px;
+  border-radius: 15px;
+  border-left: 5px solid #e17055;
+  box-shadow: 0 4px 15px rgba(254, 211, 48, 0.3);
+}
+
+.storageDescription p {
+  margin: 0;
+  color: #2d3436;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.storagePetSection {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.storagePetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f1f2f6;
+}
+
+.storagePetHeader h4 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.storageLoading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.loadingSpinner {
+  animation: spin 1s linear infinite;
+}
+
+.storagePetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.storagePetCard {
+  background: white;
+  border: 2px solid;
+  border-radius: 15px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.storagePetCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--rarity-color, #9e9e9e), transparent);
+}
+
+.storagePetCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.storagePetImage {
+  position: relative;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.storagePetImage img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.storagePetRarity {
+  position: absolute;
+  top: -5px;
+  right: 50%;
+  transform: translateX(50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.storagePetDetails {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.storagePetName {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.storagePetStats {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
+.storagePetLevel {
+  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.storagePetExp {
+  background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.storagePetCombat {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.storagePetHp, .storagePetAtk {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #636e72;
+}
+
+.storagePetActions {
+  text-align: center;
+}
+
+.storageMoveToBagBtn {
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+}
+
+.storageMoveToBagBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00a085 0%, #008f7a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+}
+
+.storageMoveToBagBtn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.storageBtnIcon, .storageBtnSpinner {
+  font-size: 1rem;
+}
+
+.storageBtnSpinner {
+  animation: spin 1s linear infinite;
+}
+
+.storageEmptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7f8c8d;
+}
+
+.storageEmptyIcon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.storageEmptyState h4 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.storageEmptyState p {
+  margin: 0 0 20px 0;
+  font-size: 1rem;
+}
+
+.storageEmptyHint {
+  background: rgba(52, 152, 219, 0.1);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  border-radius: 10px;
+  padding: 15px;
+  display: inline-block;
+}
+
+.storageEmptyHint span {
+  color: #3498db;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ========================================
+   STORAGE MODAL - NEW LAYOUT (WIREFRAME)
+   ======================================== */
+
+.storageModalNew {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 95%;
+  max-width: 1400px;
+  height: 80vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.storageModalContentNew {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Phần 1: Pet Details (50-60% chiều cao) */
+.petDetailsSection {
+  flex: 0 0 60%;
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.petImageColumn {
+  flex: 0 0 33%;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 2px solid #e0e0e0;
+}
+
+.petImageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.petDetailImage {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.petImagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+  background: #f1f3f4;
+  border: 2px dashed #ccc;
+  border-radius: 15px;
+  color: #666;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.petStatsColumn {
+  flex: 0 0 67%;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.petStatsContainer {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  display: flex;
+  align-items: center;
+}
+
+.petStatsContent {
+  width: 100%;
+}
+
+.petStatsTitle {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.petStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.petStatItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border-left: 4px solid #3498db;
+}
+
+.petStatLabel {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.petStatValue {
+  font-weight: 700;
+  color: #3498db;
+  font-size: 1.1rem;
+}
+
+.petActions {
+  text-align: center;
+}
+
+.petMoveToBagBtn {
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+}
+
+.petMoveToBagBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00a085 0%, #008f7a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+}
+
+.petMoveToBagBtn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.petStatsPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #666;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+/* Phần 2: Filters (mỏng) */
+.filtersSection {
+  flex: 0 0 10%;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+}
+
+.filtersContainer {
+  width: 100%;
+  padding: 15px 25px;
+}
+
+.filtersHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filtersHeader h4 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.filterStats {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.filterCount {
+  font-size: 0.9rem;
+  color: #3498db;
+  font-weight: 600;
+  background: rgba(52, 152, 219, 0.1);
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.clearFiltersBtn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clearFiltersBtn:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.filtersContent {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filterGroup label {
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 0.9rem;
+  min-width: 60px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.filterSelect {
+  padding: 8px 12px;
+  border: 2px solid #bdc3c7;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Phần 3: Pet List & Pagination (20-30% chiều cao) */
+.petListSection {
+  flex: 0 0 30%;
+  background: white;
+  overflow: hidden;
+}
+
+.petListContainer {
+  width: 100%;
+  height: 100%;
+  padding: 20px 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+.petListContainer h4 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.petListLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 1rem;
+}
+
+.petListGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+  margin-bottom: 15px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 10px;
+}
+
+.petListItem {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 80px;
+  justify-content: center;
+  margin: 20px 10px 0 20px;
+}
+
+.petListItem:hover {
+  transform: translateY(-3px) scale(1.05);
+}
+
+.petListItem:hover .petListItemImage {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(1.1);
+}
+
+.selectedPetItem {
+  transform: scale(1.05);
+}
+
+.selectedPetItem .petListItemImage {
+  border: 3px solid #3498db;
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.petListItemImage {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.petListItemInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.petListItemName {
+  display: none;
+}
+
+.petListItemLevel {
+  font-size: 0.8rem;
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.petListEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Pagination */
+.paginationContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+.paginationInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.paginationInfo span:first-child {
+  color: #3498db;
+  font-weight: 600;
+}
+
+.paginationButtons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paginationBtn {
+  background: white;
+  border: 2px solid #bdc3c7;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  border-color: #3498db;
+  background: #e8f4fd;
+  color: #3498db;
+}
+
+.paginationBtn:disabled {
+  background: #f1f3f4;
+  color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.activePage {
+  background: #3498db;
+  border-color: #3498db;
+  color: white;
+}
+
+.activePage:hover {
+  background: #2980b9;
+  border-color: #2980b9;
+}
+
+/* ========================================
+   REPLACE PET MODAL
+   ======================================== */
+
+.replaceModal {
+  background: white;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.replaceModalHeader {
+  background: linear-gradient(45deg, #e74c3c, #c0392b);
+  color: white;
+  padding: 1.25rem;
+  border-radius: 15px 15px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.replaceModalHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.replaceModalContent {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.replaceModalInfo {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border-left: 4px solid #e74c3c;
+}
+
+.replaceModalInfo p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.bagStatus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bagStatus span {
+  background: #e74c3c;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.replacePetList h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.replacePetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.replacePetItem {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.replacePetItem:hover {
+  border-color: #e74c3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+}
+
+.selectedReplacePet {
+  border-color: #e74c3c;
+  background: #fdf2f2;
+  transform: scale(1.05);
+}
+
+.replacePetImage {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.replacePetInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.replacePetName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.replacePetLevel {
+  font-size: 0.75rem;
+  color: #3498db;
+  font-weight: 600;
+  background: rgba(52, 152, 219, 0.1);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.replaceModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.cancelButton {
+  background: #95a5a6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+  background: #7f8c8d;
+  transform: translateY(-1px);
+}
+
+.confirmButton {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirmButton:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.confirmButton:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+}
