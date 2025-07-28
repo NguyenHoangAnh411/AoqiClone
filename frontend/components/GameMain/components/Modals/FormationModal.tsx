@@ -16,7 +16,6 @@ export const FormationModal: React.FC<FormationModalProps> = ({ isOpen, onClose 
     formations,
     selectedFormation,
     availablePets,
-    loading,
     error,
     createFormation,
     deleteFormation,
@@ -32,6 +31,7 @@ export const FormationModal: React.FC<FormationModalProps> = ({ isOpen, onClose 
   const [newFormationName, setNewFormationName] = useState('');
   const [selectedPet, setSelectedPet] = useState<UserPet | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
+  const [processingSlots, setProcessingSlots] = useState<Set<number>>(new Set());
 
   // Handle formation creation
   const handleCreateFormation = useCallback(async () => {
@@ -60,52 +60,84 @@ export const FormationModal: React.FC<FormationModalProps> = ({ isOpen, onClose 
     return selectedFormation?.pets.some(p => p.position === position && p.isActive) || false;
   }, [selectedFormation]);
 
-  // Handle slot click
+  // Check if slot is being processed
+  const isSlotProcessing = useCallback((position: number) => {
+    return processingSlots.has(position);
+  }, [processingSlots]);
+
+  // Handle slot click with immediate feedback
   const handleSlotClick = useCallback(async (position: number) => {
-    if (!selectedFormation) return;
+    if (!selectedFormation || isSlotProcessing(position)) return;
 
     const petSlot = getPetAtPosition(position);
     const isOccupied = isSlotOccupied(position);
 
-    if (selectedPet && !isOccupied) {
-      // Add pet to slot
-      const activePets = selectedFormation.pets.filter(p => p.isActive);
-      if (activePets.length >= 5) {
-        clearError();
-        return;
-      }
-      
-      const success = await addPetToFormation(selectedFormation._id, selectedPet._id, position);
-      if (success) {
-        setSelectedPet(null);
-      }
-    } else if (isOccupied && petSlot) {
-      if (selectedPet) {
-        // Move pet to this slot
-        // First remove from old position (if any)
-        const oldPosition = selectedFormation.pets.find(p => p.userPet._id === selectedPet._id && p.isActive)?.position;
-        if (oldPosition) {
-          await removePetFromFormation(selectedFormation._id, oldPosition);
+    // Set processing state immediately
+    setProcessingSlots(prev => new Set(prev).add(position));
+
+    try {
+      if (selectedPet && !isOccupied) {
+        // Add pet to slot
+        const activePets = selectedFormation.pets.filter(p => p.isActive);
+        if (activePets.length >= 5) {
+          clearError();
+          return;
         }
-        // Then add to new position
+        
         const success = await addPetToFormation(selectedFormation._id, selectedPet._id, position);
         if (success) {
           setSelectedPet(null);
         }
-      } else {
-        // Remove pet from slot
-        await removePetFromFormation(selectedFormation._id, position);
+      } else if (isOccupied && petSlot) {
+        if (selectedPet) {
+          // Move pet to this slot - optimize by doing both operations in parallel
+          const oldPosition = selectedFormation.pets.find(p => p.userPet._id === selectedPet._id && p.isActive)?.position;
+          
+          if (oldPosition) {
+            // Remove from old position and add to new position in parallel
+            await Promise.all([
+              removePetFromFormation(selectedFormation._id, oldPosition),
+              addPetToFormation(selectedFormation._id, selectedPet._id, position)
+            ]);
+          } else {
+            await addPetToFormation(selectedFormation._id, selectedPet._id, position);
+          }
+          
+          setSelectedPet(null);
+        } else {
+          // Remove pet from slot
+          await removePetFromFormation(selectedFormation._id, position);
+        }
       }
+    } catch (error) {
+      console.error('Error handling slot click:', error);
+    } finally {
+      // Clear processing state
+      setProcessingSlots(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(position);
+        return newSet;
+      });
     }
-  }, [selectedFormation, selectedPet, addPetToFormation, removePetFromFormation, clearError, getPetAtPosition, isSlotOccupied]);
+  }, [
+    selectedFormation, 
+    selectedPet, 
+    addPetToFormation, 
+    removePetFromFormation, 
+    clearError, 
+    getPetAtPosition, 
+    isSlotOccupied,
+    isSlotProcessing
+  ]);
 
-  // Render formation slot
+  // Render formation slot with optimistic updates
   const renderFormationSlot = useCallback((position: number) => {
     const petSlot = getPetAtPosition(position);
     const isOccupied = isSlotOccupied(position);
     const isHovered = hoveredSlot === position;
     const canPlacePet = selectedPet && !isOccupied;
     const isSelectedPetInSlot = selectedPet && petSlot && petSlot.userPet._id === selectedPet._id;
+    const isProcessing = isSlotProcessing(position);
 
     return (
       <div
@@ -116,12 +148,19 @@ export const FormationModal: React.FC<FormationModalProps> = ({ isOpen, onClose 
           ${isSelectedPetInSlot ? styles.formationSlotSelected : ''}
           ${selectedPet && !canPlacePet && !isSelectedPetInSlot ? styles.formationSlotInactive : ''}
           ${isHovered ? styles.formationSlotHovered : ''}
+          ${isProcessing ? styles.formationSlotProcessing : ''}
         `}
         onClick={() => handleSlotClick(position)}
         onMouseEnter={() => setHoveredSlot(position)}
         onMouseLeave={() => setHoveredSlot(null)}
       >
         <div className={styles.slotNumber3x3}>{position}</div>
+        
+        {isProcessing && (
+          <div className={styles.processingOverlay}>
+            <LoadingSpinner size="small" />
+          </div>
+        )}
         
         {petSlot ? (
           <div className={styles.petInSlot3x3}>
@@ -152,6 +191,7 @@ export const FormationModal: React.FC<FormationModalProps> = ({ isOpen, onClose 
     hoveredSlot,
     selectedPet,
     handleSlotClick,
+    isSlotProcessing,
     styles
   ]);
 
@@ -198,8 +238,8 @@ export const FormationModal: React.FC<FormationModalProps> = ({ isOpen, onClose 
                   onKeyPress={(e) => e.key === 'Enter' && handleCreateFormation()}
                 />
                 <div className={styles.createFormationActions}>
-                  <button onClick={handleCreateFormation} disabled={loading}>
-                    {loading ? 'Đang tạo...' : 'Tạo'}
+                  <button onClick={handleCreateFormation}>
+                    Tạo
                   </button>
                   <button onClick={() => setShowCreateForm(false)}>Hủy</button>
                 </div>
@@ -207,7 +247,7 @@ export const FormationModal: React.FC<FormationModalProps> = ({ isOpen, onClose 
             )}
 
             <div className={styles.formationList}>
-              {formations.length === 0 && !loading ? (
+              {formations.length === 0 ? (
                 <div className={styles.emptyFormationList}>
                   <p>Chưa có đội hình nào</p>
                   <p>Tạo đội hình đầu tiên của bạn!</p>

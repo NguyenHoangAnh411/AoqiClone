@@ -18,25 +18,33 @@ const formationSchema = new mongoose.Schema({
 formationSchema.methods.calculateTotalCombatPower = async function() {
   let totalPower = 0;
   
-  // Populate thông tin userPet và pet
-  await this.populate({
-    path: 'pets.userPet',
-    populate: {
-      path: 'pet',
-      populate: [
-        { path: 'normalSkill' },
-        { path: 'ultimateSkill' },
-        { path: 'passiveSkill' }
-      ]
-    }
-  });
+  // Chỉ populate nếu cần thiết
+  if (!this.pets.some(pet => pet.userPet && typeof pet.userPet === 'object' && pet.userPet.actualCombatPower === undefined)) {
+    await this.populate({
+      path: 'pets.userPet',
+      populate: {
+        path: 'pet',
+        populate: [
+          { path: 'normalSkill' },
+          { path: 'ultimateSkill' },
+          { path: 'passiveSkill' }
+        ]
+      }
+    });
+  }
   
   for (let petSlot of this.pets) {
     if (petSlot.isActive && petSlot.userPet) {
       const userPet = petSlot.userPet;
       
-      // Tính toán actualCombatPower nếu chưa có
-      if (!userPet.actualCombatPower && userPet.pet) {
+      // Sử dụng actualCombatPower đã có nếu có
+      if (userPet.actualCombatPower) {
+        totalPower += userPet.actualCombatPower;
+        continue;
+      }
+      
+      // Chỉ tính toán nếu thực sự cần thiết
+      if (userPet.pet) {
         const { calculateActualCombatPower } = require('../utils/petUtils');
         
         const baseStats = {
@@ -55,9 +63,7 @@ formationSchema.methods.calculateTotalCombatPower = async function() {
           userPet.pet.rarity, 
           userPet.pet.element
         );
-      }
-      
-      if (userPet.actualCombatPower) {
+        
         totalPower += userPet.actualCombatPower;
       }
     }
@@ -214,7 +220,8 @@ formationSchema.methods.getPetPosition = function(userPetId) {
 
 // Pre-save middleware để tự động tính toán lực chiến
 formationSchema.pre('save', async function(next) {
-  if (this.isModified('pets')) {
+  // Chỉ tính toán lại nếu pets thay đổi và totalCombatPower chưa được cập nhật thủ công
+  if (this.isModified('pets') && !this.isModified('totalCombatPower')) {
     await this.calculateTotalCombatPower();
   }
   this.updatedAt = new Date();

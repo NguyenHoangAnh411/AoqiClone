@@ -1354,6 +1354,48 @@
   transition: all 0.3s ease;
 }
 
+.formationSlotProcessing {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  border: 2px solid #FF9800;
+  box-shadow: 0 0 15px rgba(255, 152, 0, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.formationSlotProcessing::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: processingShimmer 1.5s infinite;
+}
+
+@keyframes processingShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.processingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 152, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
 
 
 .slotNumber3x3 {

@@ -17,10 +17,12 @@ exports.getUserFormations = async (req, res) => {
       .populate(userPetPopulateOptions)
       .sort({ createdAt: -1 });
 
-    // Tính toán combat power cho mỗi formation
+    // Chỉ tính toán combat power cho những formation chưa có hoặc cần cập nhật
     for (let formation of formations) {
-      calculateFormationPetsCombatPower(formation);
-      await formation.calculateTotalCombatPower();
+      if (!formation.totalCombatPower || formation.totalCombatPower === 0) {
+        calculateFormationPetsCombatPower(formation);
+        await formation.calculateTotalCombatPower();
+      }
     }
 
     sendSuccessResponse(res, 200, { formations });
@@ -181,7 +183,7 @@ exports.addPetToFormation = async (req, res) => {
     const userPet = await UserPet.findOne({ 
       _id: userPetId, 
       user: req.user.id 
-    });
+    }).populate('pet');
     if (!userPet) {
       return sendErrorResponse(res, 404, 'Không tìm thấy linh thú');
     }
@@ -200,12 +202,30 @@ exports.addPetToFormation = async (req, res) => {
     // Cleanup inactive pets trước khi save
     formation.cleanupInactivePets();
     
+    // Tính toán combat power nhanh chóng
+    const { calculateActualCombatPower } = require('../utils/petUtils');
+    const baseStats = {
+      baseHp: userPet.pet.baseHp,
+      baseAttack: userPet.pet.baseAttack,
+      baseDefense: userPet.pet.baseDefense,
+      baseSpeed: userPet.pet.baseSpeed,
+      baseAccuracy: userPet.pet.baseAccuracy,
+      baseEvasion: userPet.pet.baseEvasion,
+      baseCriticalRate: userPet.pet.baseCriticalRate
+    };
+    
+    const newPetCombatPower = calculateActualCombatPower(
+      baseStats, 
+      userPet.level, 
+      userPet.pet.rarity, 
+      userPet.pet.element
+    );
+    
+    // Cập nhật combat power trực tiếp
+    formation.totalCombatPower += newPetCombatPower;
+    
     await formation.save();
     await formation.populate(userPetPopulateOptions);
-
-    // Tính toán combat power cho mỗi pet trong formation
-    calculateFormationPetsCombatPower(formation);
-    await formation.calculateTotalCombatPower();
 
     sendSuccessResponse(res, 200, { formation }, 'Thêm linh thú vào đội hình thành công');
   } catch (err) {
@@ -222,10 +242,20 @@ exports.removePetFromFormation = async (req, res) => {
     const formation = await Formation.findOne({ 
       _id: formationId, 
       user: req.user.id 
-    });
+    }).populate(userPetPopulateOptions);
     if (!formation) {
       return sendErrorResponse(res, 404, 'Không tìm thấy đội hình');
     }
+
+    // Tìm pet để xóa và lấy combat power
+    const petToRemove = formation.pets.find(p => p.position === parseInt(position) && p.isActive);
+    if (!petToRemove) {
+      return sendErrorResponse(res, 404, 'Không tìm thấy linh thú ở vị trí này');
+    }
+
+    // Trừ combat power trước khi xóa
+    const removedCombatPower = petToRemove.userPet.actualCombatPower || 0;
+    formation.totalCombatPower -= removedCombatPower;
 
     // Xóa pet khỏi đội hình
     formation.removePet(parseInt(position));
@@ -235,10 +265,6 @@ exports.removePetFromFormation = async (req, res) => {
     
     await formation.save();
     await formation.populate(userPetPopulateOptions);
-
-    // Tính toán combat power cho mỗi pet trong formation
-    calculateFormationPetsCombatPower(formation);
-    await formation.calculateTotalCombatPower();
 
     sendSuccessResponse(res, 200, { formation }, 'Xóa linh thú khỏi đội hình thành công');
   } catch (err) {
