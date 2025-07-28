@@ -3,80 +3,26 @@ const User = require('../models/User');
 const Skill = require('../models/Skill');
 const UserPet = require('../models/UserPet');
 const UserBag = require('../models/UserBag');
+const { updateUserPetStats } = require('../utils/petUtils');
 const { 
-  getExpNeededForNextLevel, 
-  canLevelUp, 
-  calculateActualCombatPower,
-  calculatePetRating,
-  getPetClass,
-  updateUserPetStats
-} = require('../utils/petUtils');
-
-// Helper function để tính toán thông tin exp và level up cho pet
-const calculatePetInfo = (userPet) => {
-  const expNeeded = getExpNeededForNextLevel(userPet.level, userPet.pet.rarity);
-  const canLevelUpNow = canLevelUp(userPet.level, userPet.exp, userPet.pet.rarity);
-  
-
-  
-  // Tính combat power và rating
-  const baseStats = {
-    baseHp: userPet.pet.baseHp,
-    baseAttack: userPet.pet.baseAttack,
-    baseDefense: userPet.pet.baseDefense,
-    baseSpeed: userPet.pet.baseSpeed,
-    baseAccuracy: userPet.pet.baseAccuracy,
-    baseEvasion: userPet.pet.baseEvasion,
-    baseCriticalRate: userPet.pet.baseCriticalRate
-  };
-  
-  const actualCombatPower = calculateActualCombatPower(
-    baseStats, 
-    userPet.level, 
-    userPet.pet.rarity, 
-    userPet.pet.element
-  );
-  
-  const petRating = calculatePetRating({
-    hp: userPet.hp,
-    attack: userPet.attack,
-    defense: userPet.defense,
-    speed: userPet.speed
-  });
-  
-  const petClass = getPetClass(actualCombatPower);
-  
-  return {
-    ...userPet.toObject(),
-    expNeededForNextLevel: expNeeded,
-    canLevelUp: canLevelUpNow,
-    actualCombatPower: actualCombatPower,
-    petRating: petRating,
-    petClass: petClass,
-    progressPercentage: userPet.level >= 100 ? 100 : Math.floor((userPet.exp / expNeeded) * 100)
-  };
-};
+  calculatePetInfo,
+  singleUserPetPopulateOptions,
+  petPopulateOptions,
+  sendErrorResponse,
+  sendSuccessResponse,
+  validateObjectOwnership
+} = require('../utils/controllerUtils');
 
 class UserPetController {
 
   async getStarterPets(req, res) {
     try {
       const starterPets = await Pet.find({ isStarter: true })
-        .populate('normalSkill')
-        .populate('ultimateSkill')
-        .populate('passiveSkill')
-        .populate('evolutionPet');
+        .populate(petPopulateOptions);
   
-      res.json({ 
-        success: true, 
-        starterPets: starterPets 
-      });
+      sendSuccessResponse(res, 200, { starterPets });
     } catch (err) {
-      console.error('Get starter pets error:', err);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Lỗi khi tải danh sách linh thú mở đầu' 
-      });
+      sendErrorResponse(res, 500, 'Lỗi khi tải danh sách linh thú mở đầu', err);
     }
   };
 
@@ -144,6 +90,11 @@ class UserPetController {
       });
 
       await newUserPet.save();
+
+      // Cập nhật trường hasChosenStarterPet trong User model
+      await User.findByIdAndUpdate(req.user.id, {
+        hasChosenStarterPet: true
+      });
 
       // Populate thông tin pet
       const userPetWithInfo = await UserPet.findById(newUserPet._id).populate({
@@ -441,8 +392,6 @@ class UserPetController {
       res.json({ 
         success: true, 
         userPets: enrichedUserPets,
-        bagPets: bagPets,
-        storagePets: storagePets,
         summary: {
           total: userPets.length,
           bag: bagPets.length,

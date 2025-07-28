@@ -3,6 +3,13 @@ const Pet = require('../models/Pet');
 const UserPet = require('../models/UserPet');
 const Skill = require('../models/Skill');
 const User = require('../models/User');
+const { 
+  sendErrorResponse, 
+  sendSuccessResponse, 
+  validateRequiredFields,
+  createFakeUserPet,
+  singleUserPetPopulateOptions
+} = require('../utils/controllerUtils');
 
 // Active battles storage (in production, use Redis)
 const activeBattles = new Map();
@@ -14,8 +21,13 @@ const startBattle = async (req, res) => {
     const userId = req.user.id;
 
     // Validate input
-    if (!playerPets || !enemyPets || playerPets.length === 0 || enemyPets.length === 0) {
-      return res.status(400).json({ message: 'Invalid battle setup' });
+    const validation = validateRequiredFields(req.body, ['playerPets', 'enemyPets']);
+    if (!validation.isValid) {
+      return sendErrorResponse(res, 400, validation.error);
+    }
+
+    if (playerPets.length === 0 || enemyPets.length === 0) {
+      return sendErrorResponse(res, 400, 'Invalid battle setup');
     }
 
     // Load player pets with skills
@@ -44,21 +56,7 @@ const startBattle = async (req, res) => {
         }
 
         // Tạo fake UserPet cho AI opponents
-        const fakeUserPet = {
-          user: petData.userId || 'ai',
-          pet: petData.petId,
-          level: Math.floor(Math.random() * 50) + 20, // Level 20-70
-          exp: 0,
-          hp: 1000,
-          attack: 100,
-          defense: 50,
-          speed: 100,
-          accuracy: 100,
-          evasion: 10,
-          criticalRate: 5,
-          isActive: false,
-          createdAt: new Date()
-        };
+        const fakeUserPet = createFakeUserPet(petData);
 
         return { pet, userPet: fakeUserPet, skills };
       })
@@ -71,15 +69,12 @@ const startBattle = async (req, res) => {
     // Store battle
     activeBattles.set(battle.battleId, battle);
 
-    res.json({
-      success: true,
+    sendSuccessResponse(res, 200, {
       battleId: battle.battleId,
       battleState: battleState
     });
-
   } catch (error) {
-    console.error('Start battle error:', error);
-    res.status(500).json({ message: 'Failed to start battle', error: error.message });
+    sendErrorResponse(res, 500, 'Failed to start battle', error);
   }
 };
 
@@ -90,164 +85,90 @@ const getBattleState = async (req, res) => {
     const battle = activeBattles.get(battleId);
 
     if (!battle) {
-      return res.status(404).json({ message: 'Battle not found' });
+      return sendErrorResponse(res, 404, 'Battle not found');
     }
 
-    res.json({
-      success: true,
+    sendSuccessResponse(res, 200, {
       battleState: battle.getBattleState()
     });
-
   } catch (error) {
-    console.error('Get battle state error:', error);
-    res.status(500).json({ message: 'Failed to get battle state', error: error.message });
+    sendErrorResponse(res, 500, 'Failed to get battle state', error);
   }
 };
 
-// Select action for current turn
+// Select action for a participant
 const selectAction = async (req, res) => {
   try {
     const { battleId } = req.params;
-    const { actionType, skillId, targetIndex } = req.body;
-    const userId = req.user.id;
+    const { participantId, action, targetId } = req.body;
 
     const battle = activeBattles.get(battleId);
     if (!battle) {
-      return res.status(404).json({ message: 'Battle not found' });
+      return sendErrorResponse(res, 404, 'Battle not found');
     }
 
-    // Validate that it's the user's turn
-    const currentParticipant = battle.getCurrentParticipant();
-    if (!currentParticipant) {
-      return res.status(400).json({ message: 'No current participant' });
-    }
-
-    // Check if it's player's turn (simple check - in production, add more validation)
-    const isPlayerTurn = battle.playerPets.includes(currentParticipant);
-    if (!isPlayerTurn) {
-      return res.status(400).json({ message: 'Not your turn' });
-    }
-
-    // Select action
-    const result = battle.selectAction(actionType, skillId, targetIndex);
-    if (!result.success) {
-      return res.status(400).json({ message: result.message });
-    }
-
-    res.json({
-      success: true,
-      battleState: battle.getBattleState()
-    });
-
+    const result = battle.selectAction(participantId, action, targetId);
+    
+    sendSuccessResponse(res, 200, { result });
   } catch (error) {
-    console.error('Select action error:', error);
-    res.status(500).json({ message: 'Failed to select action', error: error.message });
+    sendErrorResponse(res, 400, 'Failed to select action', error);
   }
 };
 
-// Execute current action
+// Execute action
 const executeAction = async (req, res) => {
   try {
     const { battleId } = req.params;
+    const { participantId } = req.body;
+
     const battle = activeBattles.get(battleId);
-
     if (!battle) {
-      return res.status(404).json({ message: 'Battle not found' });
+      return sendErrorResponse(res, 404, 'Battle not found');
     }
 
-    // Execute action
-    const result = battle.executeAction();
-    if (!result.success) {
-      return res.status(400).json({ message: result.message });
-    }
-
-    // Move to next participant
-    battle.nextParticipant();
-
-    res.json({
-      success: true,
-      actionResult: result,
-      battleState: battle.getBattleState()
-    });
-
+    const result = battle.executeAction(participantId);
+    
+    sendSuccessResponse(res, 200, { result });
   } catch (error) {
-    console.error('Execute action error:', error);
-    res.status(500).json({ message: 'Failed to execute action', error: error.message });
+    sendErrorResponse(res, 400, 'Failed to execute action', error);
   }
 };
 
-// AI turn (for enemy)
+// Execute AI turn
 const executeAITurn = async (req, res) => {
   try {
     const { battleId } = req.params;
     const battle = activeBattles.get(battleId);
 
     if (!battle) {
-      return res.status(404).json({ message: 'Battle not found' });
+      return sendErrorResponse(res, 404, 'Battle not found');
     }
 
-    const currentParticipant = battle.getCurrentParticipant();
-    if (!currentParticipant) {
-      return res.status(400).json({ message: 'No current participant' });
-    }
-
-    // Check if it's AI turn
-    const isAITurn = battle.enemyPets.includes(currentParticipant);
-    if (!isAITurn) {
-      return res.status(400).json({ message: 'Not AI turn' });
-    }
-
-    // Simple AI logic
-    const aiAction = generateAIAction(battle, currentParticipant);
-    const selectResult = battle.selectAction(aiAction.type, aiAction.skillId, aiAction.targetIndex);
+    // Get AI participants
+    const aiParticipants = battle.getParticipants().filter(p => p.type === 'ai');
     
-    if (selectResult.success) {
-      const executeResult = battle.executeAction();
-      battle.nextParticipant();
-
-      res.json({
-        success: true,
-        aiAction: aiAction,
-        actionResult: executeResult,
-        battleState: battle.getBattleState()
-      });
-    } else {
-      res.status(400).json({ message: selectResult.message });
+    const results = [];
+    for (const aiParticipant of aiParticipants) {
+      const action = generateAIAction(battle, aiParticipant);
+      const result = battle.executeAction(aiParticipant.id, action);
+      results.push(result);
     }
 
+    sendSuccessResponse(res, 200, { results });
   } catch (error) {
-    console.error('Execute AI turn error:', error);
-    res.status(500).json({ message: 'Failed to execute AI turn', error: error.message });
+    sendErrorResponse(res, 500, 'Failed to execute AI turn', error);
   }
 };
 
 // Generate AI action
 const generateAIAction = (battle, aiParticipant) => {
-  // Simple AI: randomly choose between normal skill and ultimate skill
-  const availableSkills = aiParticipant.skills.filter(skill => 
-    skill.type === 'normal' || skill.type === 'ultimate'
-  );
-
-  if (availableSkills.length === 0) {
-    return { type: 'defend' };
-  }
-
-  // Choose random skill
-  const randomSkill = availableSkills[Math.floor(Math.random() * availableSkills.length)];
+  // Simple AI logic - can be enhanced
+  const availableActions = ['attack', 'skill'];
+  const randomAction = availableActions[Math.floor(Math.random() * availableActions.length)];
   
-  // Choose random target (player pets)
-  const alivePlayerPets = battle.playerPets.filter(p => p.currentHp > 0);
-  if (alivePlayerPets.length === 0) {
-    return { type: 'defend' };
-  }
-
-  const randomTarget = alivePlayerPets[Math.floor(Math.random() * alivePlayerPets.length)];
-  const targetIndex = battle.allParticipants.indexOf(randomTarget);
-
   return {
-    type: randomSkill.type === 'normal' ? 'normal_skill' : 'ultimate_skill',
-    skillId: randomSkill._id,
-    targetIndex: targetIndex
+    type: randomAction,
+    targetId: battle.getRandomTarget(aiParticipant.id)
   };
 };
 
@@ -258,76 +179,66 @@ const endBattle = async (req, res) => {
     const battle = activeBattles.get(battleId);
 
     if (!battle) {
-      return res.status(404).json({ message: 'Battle not found' });
+      return sendErrorResponse(res, 404, 'Battle not found');
     }
 
-    // End battle
-    const battleState = battle.endBattle('cancelled');
-    
-    // Remove from active battles
+    const result = battle.endBattle();
     activeBattles.delete(battleId);
 
-    res.json({
-      success: true,
-      message: 'Battle ended',
-      battleState: battleState
-    });
-
+    sendSuccessResponse(res, 200, { result });
   } catch (error) {
-    console.error('End battle error:', error);
-    res.status(500).json({ message: 'Failed to end battle', error: error.message });
+    sendErrorResponse(res, 500, 'Failed to end battle', error);
   }
 };
 
 // Get battle history
 const getBattleHistory = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { page = 1, limit = 10 } = req.query;
+    const userId = req.user.id;
 
-    // In production, store battles in database
+    // This would typically query a BattleHistory model
     // For now, return empty array
-    res.json({
-      success: true,
-      battles: [],
-      total: 0,
-      page: parseInt(page),
-      limit: parseInt(limit)
-    });
+    const battles = [];
+    const total = 0;
 
+    sendSuccessResponse(res, 200, {
+      battles,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
-    console.error('Get battle history error:', error);
-    res.status(500).json({ message: 'Failed to get battle history', error: error.message });
+    sendErrorResponse(res, 500, 'Failed to get battle history', error);
   }
 };
 
-// Get active battles for user
+// Get active battles
 const getActiveBattles = async (req, res) => {
   try {
     const userId = req.user.id;
-    
-    // Find battles where user is participating
-    const userBattles = Array.from(activeBattles.values()).filter(battle => {
-      return battle.playerPets.some(pet => pet.userPet.user.toString() === userId);
-    });
+    const userBattles = [];
 
-    res.json({
-      success: true,
-      battles: userBattles.map(battle => ({
-        battleId: battle.battleId,
-        battleType: battle.battleType,
-        state: battle.state,
-        turn: battle.currentTurn,
-        participants: {
-          player: battle.playerPets.length,
-          enemy: battle.enemyPets.length
-        }
-      }))
-    });
+    // Find battles where user is a participant
+    for (const [battleId, battle] of activeBattles) {
+      const participants = battle.getParticipants();
+      const userParticipant = participants.find(p => p.userId === userId);
+      
+      if (userParticipant) {
+        userBattles.push({
+          battleId,
+          battleState: battle.getBattleState(),
+          participant: userParticipant
+        });
+      }
+    }
 
+    sendSuccessResponse(res, 200, { battles: userBattles });
   } catch (error) {
-    console.error('Get active battles error:', error);
-    res.status(500).json({ message: 'Failed to get active battles', error: error.message });
+    sendErrorResponse(res, 500, 'Failed to get active battles', error);
   }
 };
 

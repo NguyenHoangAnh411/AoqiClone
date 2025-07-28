@@ -2,30 +2,32 @@
 
 import { useState } from 'react';
 import styles from '../../app/page.module.css';
-import { GameTopBar, GameBottomBar, GameMainArea } from './';
-import { ProfileModal, QuestModal, PetsModal, ShopModal } from './components/Modals';
+import { GameMainArea } from './';
+import { ProfileModal, QuestModal, PetsModal, ShopModal, FormationModal } from './components/Modals';
 
 export const GameInterface = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
   const [showPets, setShowPets] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showFormation, setShowFormation] = useState(false);
+
+  // Handler functions for corner buttons
+  const handleCornerProfile = () => setShowProfile(!showProfile);
+  const handleCornerQuests = () => setShowQuests(!showQuests);
+  const handleCornerPets = () => setShowPets(!showPets);
+  const handleCornerShop = () => setShowShop(!showShop);
+  const handleCornerFormation = () => setShowFormation(!showFormation);
 
   return (
     <div className={styles.gamePlayArea}>
-      {/* Top Bar */}
-      <GameTopBar 
-        onProfileClick={() => setShowProfile(!showProfile)}
-        onQuestClick={() => setShowQuests(!showQuests)}
-      />
-
       {/* Main Game Area */}
-      <GameMainArea />
-
-      {/* Bottom Bar */}
-      <GameBottomBar 
-        onPetsClick={() => setShowPets(!showPets)}
-        onShopClick={() => setShowShop(!showShop)}
+      <GameMainArea 
+        onCornerProfile={handleCornerProfile}
+        onCornerQuests={handleCornerQuests}
+        onCornerPets={handleCornerPets}
+        onCornerShop={handleCornerShop}
+        onCornerFormation={handleCornerFormation}
       />
 
       {/* Modals */}
@@ -44,11 +46,14 @@ export const GameInterface = () => {
         onClose={() => setShowPets(false)} 
       />
       
-
-      
       <ShopModal 
         isOpen={showShop} 
         onClose={() => setShowShop(false)} 
+      />
+
+      <FormationModal 
+        isOpen={showFormation} 
+        onClose={() => setShowFormation(false)} 
       />
     </div>
   );

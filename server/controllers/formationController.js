@@ -1,26 +1,31 @@
 const Formation = require('../models/Formation');
 const UserPet = require('../models/UserPet');
+const { 
+  calculatePetInfo,
+  calculateFormationPetCombatPower,
+  calculateFormationPetsCombatPower,
+  userPetPopulateOptions,
+  sendErrorResponse,
+  sendSuccessResponse,
+  validateObjectOwnership
+} = require('../utils/controllerUtils');
 
 // Lấy tất cả đội hình của user
 exports.getUserFormations = async (req, res) => {
   try {
     const formations = await Formation.find({ user: req.user.id })
-      .populate({
-        path: 'pets.userPet',
-        populate: {
-          path: 'pet',
-          populate: [
-            { path: 'normalSkill' },
-            { path: 'ultimateSkill' },
-            { path: 'passiveSkill' }
-          ]
-        }
-      })
+      .populate(userPetPopulateOptions)
       .sort({ createdAt: -1 });
 
-    res.json(formations);
+    // Tính toán combat power cho mỗi formation
+    for (let formation of formations) {
+      calculateFormationPetsCombatPower(formation);
+      await formation.calculateTotalCombatPower();
+    }
+
+    sendSuccessResponse(res, 200, { formations });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải danh sách đội hình', err);
   }
 };
 
@@ -30,38 +35,26 @@ exports.getFormation = async (req, res) => {
     const formation = await Formation.findOne({ 
       _id: req.params.id, 
       user: req.user.id 
-    })
-      .populate({
-        path: 'pets.userPet',
-        populate: {
-          path: 'pet',
-          populate: [
-            { path: 'normalSkill' },
-            { path: 'ultimateSkill' },
-            { path: 'passiveSkill' }
-          ]
-        }
-      });
+    }).populate(userPetPopulateOptions);
 
-    if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+    const validation = validateObjectOwnership(formation, req.user.id, 'đội hình');
+    if (!validation.isValid) {
+      return sendErrorResponse(res, 404, validation.error);
     }
 
-    res.json(formation);
+    calculateFormationPetsCombatPower(formation);
+    await formation.calculateTotalCombatPower();
+
+    sendSuccessResponse(res, 200, { formation });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải đội hình', err);
   }
 };
 
 // Tạo đội hình mới
 exports.createFormation = async (req, res) => {
   try {
-    const { name, pets } = req.body;
-
-    // Kiểm tra tên đội hình
-    if (!name || name.trim().length === 0) {
-      return res.status(400).json({ error: 'Tên đội hình không được để trống' });
-    }
+    const { name } = req.body;
 
     // Kiểm tra tên đội hình đã tồn tại chưa
     const existingFormation = await Formation.findOne({ 
@@ -69,39 +62,19 @@ exports.createFormation = async (req, res) => {
       name: name.trim() 
     });
     if (existingFormation) {
-      return res.status(400).json({ error: 'Tên đội hình đã tồn tại' });
+      return sendErrorResponse(res, 400, 'Tên đội hình đã tồn tại');
     }
 
-    // Tạo đội hình mới
     const formation = new Formation({
       user: req.user.id,
       name: name.trim(),
-      pets: pets || []
+      pets: []
     });
-
-    // Kiểm tra đội hình hợp lệ
-    if (!formation.isValid()) {
-      return res.status(400).json({ error: 'Đội hình không hợp lệ' });
-    }
 
     await formation.save();
-
-    // Populate thông tin pet
-    await formation.populate({
-      path: 'pets.userPet',
-      populate: {
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' }
-        ]
-      }
-    });
-
-    res.status(201).json(formation);
+    sendSuccessResponse(res, 201, { formation }, 'Tạo đội hình thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi tạo đội hình', err);
   }
 };
 
@@ -116,8 +89,9 @@ exports.updateFormation = async (req, res) => {
       user: req.user.id 
     });
 
-    if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+    const validation = validateObjectOwnership(formation, req.user.id, 'đội hình');
+    if (!validation.isValid) {
+      return sendErrorResponse(res, 404, validation.error);
     }
 
     // Cập nhật tên nếu có
@@ -129,7 +103,7 @@ exports.updateFormation = async (req, res) => {
         _id: { $ne: formationId }
       });
       if (existingFormation) {
-        return res.status(400).json({ error: 'Tên đội hình đã tồn tại' });
+        return sendErrorResponse(res, 400, 'Tên đội hình đã tồn tại');
       }
       formation.name = name.trim();
     }
@@ -138,28 +112,16 @@ exports.updateFormation = async (req, res) => {
     if (pets) {
       formation.pets = pets;
       if (!formation.isValid()) {
-        return res.status(400).json({ error: 'Đội hình không hợp lệ' });
+        return sendErrorResponse(res, 400, 'Đội hình không hợp lệ');
       }
     }
 
     await formation.save();
+    await formation.populate(userPetPopulateOptions);
 
-    // Populate thông tin pet
-    await formation.populate({
-      path: 'pets.userPet',
-      populate: {
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' }
-        ]
-      }
-    });
-
-    res.json(formation);
+    sendSuccessResponse(res, 200, { formation }, 'Cập nhật đội hình thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi cập nhật đội hình', err);
   }
 };
 
@@ -172,12 +134,12 @@ exports.deleteFormation = async (req, res) => {
     });
 
     if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy đội hình');
     }
 
-    res.json({ success: true, message: 'Đã xóa đội hình' });
+    sendSuccessResponse(res, 200, {}, 'Đã xóa đội hình thành công');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi xóa đội hình', err);
   }
 };
 
@@ -197,26 +159,15 @@ exports.setActiveFormation = async (req, res) => {
       { _id: formationId, user: req.user.id },
       { isActive: true },
       { new: true }
-    )
-      .populate({
-        path: 'pets.userPet',
-        populate: {
-          path: 'pet',
-          populate: [
-            { path: 'normalSkill' },
-            { path: 'ultimateSkill' },
-            { path: 'passiveSkill' }
-          ]
-        }
-      });
+    ).populate(userPetPopulateOptions);
 
     if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy đội hình');
     }
 
-    res.json(formation);
+    sendSuccessResponse(res, 200, { formation }, 'Đặt đội hình active thành công');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi đặt đội hình active', err);
   }
 };
 
@@ -232,7 +183,7 @@ exports.addPetToFormation = async (req, res) => {
       user: req.user.id 
     });
     if (!userPet) {
-      return res.status(404).json({ error: 'Không tìm thấy linh thú' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy linh thú');
     }
 
     const formation = await Formation.findOne({ 
@@ -240,29 +191,25 @@ exports.addPetToFormation = async (req, res) => {
       user: req.user.id 
     });
     if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy đội hình');
     }
 
     // Thêm pet vào đội hình
     formation.addPet(userPetId, position);
+    
+    // Cleanup inactive pets trước khi save
+    formation.cleanupInactivePets();
+    
     await formation.save();
+    await formation.populate(userPetPopulateOptions);
 
-    // Populate thông tin pet
-    await formation.populate({
-      path: 'pets.userPet',
-      populate: {
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' }
-        ]
-      }
-    });
+    // Tính toán combat power cho mỗi pet trong formation
+    calculateFormationPetsCombatPower(formation);
+    await formation.calculateTotalCombatPower();
 
-    res.json(formation);
+    sendSuccessResponse(res, 200, { formation }, 'Thêm linh thú vào đội hình thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi thêm linh thú vào đội hình', err);
   }
 };
 
@@ -270,36 +217,32 @@ exports.addPetToFormation = async (req, res) => {
 exports.removePetFromFormation = async (req, res) => {
   try {
     const { position } = req.params;
-    const formationId = req.params.formationId;
+    const formationId = req.params.id;
 
     const formation = await Formation.findOne({ 
       _id: formationId, 
       user: req.user.id 
     });
     if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy đội hình');
     }
 
     // Xóa pet khỏi đội hình
     formation.removePet(parseInt(position));
+    
+    // Cleanup inactive pets trước khi save
+    formation.cleanupInactivePets();
+    
     await formation.save();
+    await formation.populate(userPetPopulateOptions);
 
-    // Populate thông tin pet
-    await formation.populate({
-      path: 'pets.userPet',
-      populate: {
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' }
-        ]
-      }
-    });
+    // Tính toán combat power cho mỗi pet trong formation
+    calculateFormationPetsCombatPower(formation);
+    await formation.calculateTotalCombatPower();
 
-    res.json(formation);
+    sendSuccessResponse(res, 200, { formation }, 'Xóa linh thú khỏi đội hình thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi xóa linh thú khỏi đội hình', err);
   }
 };
 
@@ -314,29 +257,17 @@ exports.movePetInFormation = async (req, res) => {
       user: req.user.id 
     });
     if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy đội hình');
     }
 
     // Di chuyển pet
     formation.movePet(parseInt(fromPosition), parseInt(toPosition));
     await formation.save();
+    await formation.populate(userPetPopulateOptions);
 
-    // Populate thông tin pet
-    await formation.populate({
-      path: 'pets.userPet',
-      populate: {
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' }
-        ]
-      }
-    });
-
-    res.json(formation);
+    sendSuccessResponse(res, 200, { formation }, 'Di chuyển linh thú thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi di chuyển linh thú', err);
   }
 };
 
@@ -350,19 +281,18 @@ exports.getAvailablePets = async (req, res) => {
       user: req.user.id 
     });
     if (!formation) {
-      return res.status(404).json({ error: 'Không tìm thấy đội hình' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy đội hình');
     }
 
     // Lấy tất cả pet của user
     const allUserPets = await UserPet.find({ user: req.user.id })
-      .populate({
-        path: 'pet',
-        populate: [
+      .populate([
+        { path: 'pet', populate: [
           { path: 'normalSkill' },
           { path: 'ultimateSkill' },
           { path: 'passiveSkill' }
-        ]
-      });
+        ]}
+      ]);
 
     // Lọc ra những pet chưa có trong đội hình
     const usedPetIds = formation.pets
@@ -373,9 +303,12 @@ exports.getAvailablePets = async (req, res) => {
       !usedPetIds.includes(pet._id.toString())
     );
 
-    res.json(availablePets);
+    // Tính toán thông tin cho mỗi pet
+    const enrichedAvailablePets = availablePets.map(pet => calculatePetInfo(pet));
+
+    sendSuccessResponse(res, 200, { availablePets: enrichedAvailablePets });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải danh sách linh thú có thể thêm', err);
   }
 };
 
@@ -389,11 +322,36 @@ exports.recalculateAllFormations = async (req, res) => {
       await formation.save();
     }
 
-    res.json({
-      message: `Đã cập nhật lực chiến cho ${formations.length} đội hình`,
+    sendSuccessResponse(res, 200, {
       count: formations.length
-    });
+    }, `Đã cập nhật lực chiến cho ${formations.length} đội hình`);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi cập nhật lực chiến', err);
+  }
+};
+
+// Cleanup tất cả formations của user
+exports.cleanupAllFormations = async (req, res) => {
+  try {
+    const formations = await Formation.find({ user: req.user.id });
+    let totalCleaned = 0;
+    
+    for (let formation of formations) {
+      const beforeCount = formation.pets.length;
+      formation.cleanupInactivePets();
+      const afterCount = formation.pets.length;
+      
+      if (beforeCount !== afterCount) {
+        await formation.save();
+        totalCleaned += (beforeCount - afterCount);
+      }
+    }
+
+    sendSuccessResponse(res, 200, {
+      formationsCleaned: formations.length,
+      recordsRemoved: totalCleaned
+    }, `Đã cleanup ${formations.length} đội hình, xóa ${totalCleaned} records cũ`);
+  } catch (err) {
+    sendErrorResponse(res, 500, 'Lỗi khi cleanup formations', err);
   }
 }; 

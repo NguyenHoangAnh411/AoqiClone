@@ -5,7 +5,7 @@ const formationSchema = new mongoose.Schema({
   name: { type: String, required: true, default: 'Đội hình 1' }, // Tên đội hình
   pets: [{
     userPet: { type: mongoose.Schema.Types.ObjectId, ref: 'UserPet', required: true },
-    position: { type: Number, required: true, min: 1, max: 5 }, // Vị trí trong đội hình (1-5)
+    position: { type: Number, required: true, min: 1, max: 9 }, // Vị trí trong đội hình (1-9)
     isActive: { type: Boolean, default: true } // Pet có được sử dụng trong đội hình không
   }],
   totalCombatPower: { type: Number, default: 0 }, // Tổng lực chiến của đội hình
@@ -18,13 +18,47 @@ const formationSchema = new mongoose.Schema({
 formationSchema.methods.calculateTotalCombatPower = async function() {
   let totalPower = 0;
   
+  // Populate thông tin userPet và pet
+  await this.populate({
+    path: 'pets.userPet',
+    populate: {
+      path: 'pet',
+      populate: [
+        { path: 'normalSkill' },
+        { path: 'ultimateSkill' },
+        { path: 'passiveSkill' }
+      ]
+    }
+  });
+  
   for (let petSlot of this.pets) {
-    if (petSlot.isActive) {
-      // Populate thông tin userPet để lấy combatPower
-      await this.populate('pets.userPet');
+    if (petSlot.isActive && petSlot.userPet) {
       const userPet = petSlot.userPet;
-      if (userPet && userPet.combatPower) {
-        totalPower += userPet.combatPower;
+      
+      // Tính toán actualCombatPower nếu chưa có
+      if (!userPet.actualCombatPower && userPet.pet) {
+        const { calculateActualCombatPower } = require('../utils/petUtils');
+        
+        const baseStats = {
+          baseHp: userPet.pet.baseHp,
+          baseAttack: userPet.pet.baseAttack,
+          baseDefense: userPet.pet.baseDefense,
+          baseSpeed: userPet.pet.baseSpeed,
+          baseAccuracy: userPet.pet.baseAccuracy,
+          baseEvasion: userPet.pet.baseEvasion,
+          baseCriticalRate: userPet.pet.baseCriticalRate
+        };
+        
+        userPet.actualCombatPower = calculateActualCombatPower(
+          baseStats, 
+          userPet.level, 
+          userPet.pet.rarity, 
+          userPet.pet.element
+        );
+      }
+      
+      if (userPet.actualCombatPower) {
+        totalPower += userPet.actualCombatPower;
       }
     }
   }
@@ -54,28 +88,37 @@ formationSchema.methods.isValid = function() {
 // Method để thêm pet vào đội hình
 formationSchema.methods.addPet = function(userPetId, position) {
   // Kiểm tra vị trí hợp lệ
-  if (position < 1 || position > 5) {
-    throw new Error('Vị trí phải từ 1 đến 5');
+  if (position < 1 || position > 9) {
+    throw new Error('Vị trí phải từ 1 đến 9');
   }
   
-  // Kiểm tra vị trí đã có pet chưa
-  const existingPet = this.pets.find(pet => pet.position === position && pet.isActive);
-  if (existingPet) {
+  // Kiểm tra vị trí đã có pet active chưa
+  const existingActivePet = this.pets.find(pet => pet.position === position && pet.isActive);
+  if (existingActivePet) {
     throw new Error(`Vị trí ${position} đã có pet`);
   }
   
-  // Kiểm tra số lượng pet không vượt quá 5
+  // Kiểm tra số lượng pet active không vượt quá 5
   const activePets = this.pets.filter(pet => pet.isActive);
   if (activePets.length >= 5) {
     throw new Error('Đội hình đã đầy (tối đa 5 pet)');
   }
   
-  // Thêm pet vào đội hình
-  this.pets.push({
-    userPet: userPetId,
-    position: position,
-    isActive: true
-  });
+  // Kiểm tra xem pet này đã có trong formation chưa (có thể inactive)
+  const existingPet = this.pets.find(pet => pet.userPet.toString() === userPetId.toString());
+  
+  if (existingPet) {
+    // Nếu pet đã tồn tại, cập nhật vị trí và set active
+    existingPet.position = position;
+    existingPet.isActive = true;
+  } else {
+    // Nếu pet chưa tồn tại, thêm mới
+    this.pets.push({
+      userPet: userPetId,
+      position: position,
+      isActive: true
+    });
+  }
   
   return this;
 };
@@ -87,14 +130,15 @@ formationSchema.methods.removePet = function(position) {
     throw new Error(`Không tìm thấy pet ở vị trí ${position}`);
   }
   
+  // Set pet thành inactive thay vì xóa
   this.pets[petIndex].isActive = false;
   return this;
 };
 
 // Method để thay đổi vị trí pet
 formationSchema.methods.movePet = function(fromPosition, toPosition) {
-  if (fromPosition < 1 || fromPosition > 5 || toPosition < 1 || toPosition > 5) {
-    throw new Error('Vị trí phải từ 1 đến 5');
+  if (fromPosition < 1 || fromPosition > 9 || toPosition < 1 || toPosition > 9) {
+    throw new Error('Vị trí phải từ 1 đến 9');
   }
   
   const fromPet = this.pets.find(pet => pet.position === fromPosition && pet.isActive);
@@ -114,6 +158,58 @@ formationSchema.methods.movePet = function(fromPosition, toPosition) {
   }
   
   return this;
+};
+
+// Method để cleanup các pet records cũ (inactive)
+formationSchema.methods.cleanupInactivePets = function() {
+  // Chỉ giữ lại các pet active và 1 record inactive gần nhất cho mỗi pet
+  const activePets = this.pets.filter(pet => pet.isActive);
+  const inactivePets = this.pets.filter(pet => !pet.isActive);
+  
+  // Nhóm inactive pets theo userPet
+  const inactiveByPet = {};
+  inactivePets.forEach(pet => {
+    const petId = pet.userPet.toString();
+    if (!inactiveByPet[petId]) {
+      inactiveByPet[petId] = [];
+    }
+    inactiveByPet[petId].push(pet);
+  });
+  
+  // Chỉ giữ lại record mới nhất cho mỗi pet
+  const keptInactivePets = [];
+  Object.values(inactiveByPet).forEach(pets => {
+    // Sắp xếp theo thời gian tạo (mới nhất trước)
+    pets.sort((a, b) => b._id.getTimestamp() - a._id.getTimestamp());
+    // Chỉ giữ record đầu tiên (mới nhất)
+    keptInactivePets.push(pets[0]);
+  });
+  
+  // Cập nhật pets array
+  this.pets = [...activePets, ...keptInactivePets];
+  
+  return this;
+};
+
+// Method để lấy danh sách pet active
+formationSchema.methods.getActivePets = function() {
+  return this.pets.filter(pet => pet.isActive);
+};
+
+// Method để lấy danh sách pet inactive
+formationSchema.methods.getInactivePets = function() {
+  return this.pets.filter(pet => !pet.isActive);
+};
+
+// Method để kiểm tra xem pet có trong formation không
+formationSchema.methods.hasPet = function(userPetId) {
+  return this.pets.some(pet => pet.userPet.toString() === userPetId.toString());
+};
+
+// Method để lấy vị trí của pet
+formationSchema.methods.getPetPosition = function(userPetId) {
+  const pet = this.pets.find(pet => pet.userPet.toString() === userPetId.toString() && pet.isActive);
+  return pet ? pet.position : null;
 };
 
 // Pre-save middleware để tự động tính toán lực chiến

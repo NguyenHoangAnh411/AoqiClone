@@ -1,22 +1,49 @@
 const Inventory = require('../models/Inventory');
+const { 
+  sendErrorResponse, 
+  sendSuccessResponse, 
+  inventoryPopulateOptions,
+  getPaginationOptions,
+  getSortOptions,
+  getFilterOptions,
+  processConsumableEffect,
+  processFoodEffect
+} = require('../utils/controllerUtils');
 
 exports.getInventory = async (req, res) => {
   try {
-    const { itemType, limit = 50 } = req.query;
-    let filter = { user: req.user.id };
+    const { itemType, limit = 50, page = 1, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
     
+    // Build filter
+    const filter = { user: req.user.id };
     if (itemType) {
       filter.itemType = itemType;
     }
 
-    const inventory = await Inventory.find(filter)
-      .populate('itemId')
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit));
+    // Get pagination and sort options
+    const { skip, limit: limitNum } = getPaginationOptions(page, limit);
+    const sort = getSortOptions(sortBy, sortOrder);
 
-    res.json(inventory);
+    const inventory = await Inventory.find(filter)
+      .populate(inventoryPopulateOptions)
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum);
+
+    // Get total count for pagination
+    const total = await Inventory.countDocuments(filter);
+
+    sendSuccessResponse(res, 200, { 
+      inventory,
+      pagination: {
+        page: parseInt(page),
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum)
+      }
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải inventory', err);
   }
 };
 
@@ -37,9 +64,9 @@ exports.addItem = async (req, res) => {
         existingItem._id,
         { $inc: { quantity } },
         { new: true }
-      ).populate('itemId');
+      ).populate(inventoryPopulateOptions);
       
-      return res.json(updatedItem);
+      return sendSuccessResponse(res, 200, { item: updatedItem }, 'Cập nhật số lượng item thành công');
     }
 
     // Nếu chưa có, tạo mới
@@ -51,10 +78,10 @@ exports.addItem = async (req, res) => {
       durability
     });
 
-    const populatedItem = await Inventory.findById(newItem._id).populate('itemId');
-    res.status(201).json(populatedItem);
+    const populatedItem = await Inventory.findById(newItem._id).populate(inventoryPopulateOptions);
+    sendSuccessResponse(res, 201, { item: populatedItem }, 'Thêm item thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi thêm item', err);
   }
 };
 
@@ -69,50 +96,60 @@ exports.removeItem = async (req, res) => {
     });
 
     if (!item) {
-      return res.status(404).json({ error: 'Không tìm thấy item' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy item');
     }
 
     if (item.quantity < quantity) {
-      return res.status(400).json({ error: 'Số lượng item không đủ' });
+      return sendErrorResponse(res, 400, 'Số lượng item không đủ');
     }
 
     if (item.quantity === quantity) {
       // Xóa item nếu số lượng = 0
       await Inventory.findByIdAndDelete(item._id);
-      res.json({ success: true, message: 'Item đã được xóa' });
+      sendSuccessResponse(res, 200, {}, 'Item đã được xóa');
     } else {
       // Giảm số lượng
       const updatedItem = await Inventory.findByIdAndUpdate(
         item._id,
         { $inc: { quantity: -quantity } },
         { new: true }
-      ).populate('itemId');
+      ).populate(inventoryPopulateOptions);
       
-      res.json(updatedItem);
+      sendSuccessResponse(res, 200, { item: updatedItem }, 'Giảm số lượng item thành công');
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi xóa item', err);
   }
 };
 
 exports.updateItem = async (req, res) => {
   try {
     const { inventoryId } = req.params;
-    const updateData = req.body;
+    const { quantity, durability, isActive } = req.body;
     
-    const item = await Inventory.findOneAndUpdate(
-      { _id: inventoryId, user: req.user.id },
-      updateData,
-      { new: true }
-    ).populate('itemId');
+    const item = await Inventory.findOne({ 
+      _id: inventoryId, 
+      user: req.user.id 
+    });
 
     if (!item) {
-      return res.status(404).json({ error: 'Không tìm thấy item' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy item');
     }
 
-    res.json(item);
+    const updateData = {};
+    if (quantity !== undefined) updateData.quantity = quantity;
+    if (durability !== undefined) updateData.durability = durability;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    const updatedItem = await Inventory.findByIdAndUpdate(
+      inventoryId,
+      updateData,
+      { new: true }
+    ).populate(inventoryPopulateOptions);
+
+    sendSuccessResponse(res, 200, { item: updatedItem }, 'Cập nhật item thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi cập nhật item', err);
   }
 };
 
@@ -128,7 +165,7 @@ exports.equipItem = async (req, res) => {
     });
 
     if (!item) {
-      return res.status(404).json({ error: 'Không tìm thấy equipment' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy equipment');
     }
 
     // Bỏ trang bị tất cả equipment cùng loại
@@ -146,11 +183,11 @@ exports.equipItem = async (req, res) => {
       inventoryId,
       { isEquipped: true },
       { new: true }
-    ).populate('itemId');
+    ).populate(inventoryPopulateOptions);
 
-    res.json(equippedItem);
+    sendSuccessResponse(res, 200, { item: equippedItem }, 'Trang bị item thành công');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi trang bị item', err);
   }
 };
 
@@ -162,15 +199,15 @@ exports.unequipItem = async (req, res) => {
       { _id: inventoryId, user: req.user.id },
       { isEquipped: false },
       { new: true }
-    ).populate('itemId');
+    ).populate(inventoryPopulateOptions);
 
     if (!item) {
-      return res.status(404).json({ error: 'Không tìm thấy item' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy item');
     }
 
-    res.json(item);
+    sendSuccessResponse(res, 200, { item: item }, 'Bỏ trang bị item thành công');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi bỏ trang bị item', err);
   }
 };
 
@@ -179,81 +216,58 @@ exports.getEquippedItems = async (req, res) => {
     const equippedItems = await Inventory.find({
       user: req.user.id,
       isEquipped: true
-    }).populate('itemId');
+    }).populate(inventoryPopulateOptions);
 
-    res.json(equippedItems);
+    sendSuccessResponse(res, 200, { equippedItems });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải trang bị', err);
   }
 };
 
 exports.useItem = async (req, res) => {
   try {
     const { inventoryId } = req.params;
-    const { targetId, targetType } = req.body; // targetType: 'pet', 'user'
+    const { targetId, targetType } = req.body;
     
-    const item = await Inventory.findOne({
-      _id: inventoryId,
-      user: req.user.id
-    }).populate('itemId');
+    const item = await Inventory.findOne({ 
+      _id: inventoryId, 
+      user: req.user.id 
+    }).populate(inventoryPopulateOptions);
 
     if (!item) {
-      return res.status(404).json({ error: 'Không tìm thấy item' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy item');
     }
 
     if (item.quantity <= 0) {
-      return res.status(400).json({ error: 'Item đã hết' });
+      return sendErrorResponse(res, 400, 'Item đã hết');
     }
 
-    // Giảm số lượng item
-    await Inventory.findByIdAndUpdate(
-      inventoryId,
-      { 
-        $inc: { quantity: -1 },
-        lastUsed: new Date()
-      }
-    );
-
-    // Xử lý hiệu ứng của item (tùy theo loại item)
-    let effect = null;
-    
+    // Process item effect based on type
+    let result;
     if (item.itemType === 'consumable') {
-      // Xử lý consumable items
-      effect = await processConsumableEffect(item, targetId, targetType);
+      result = await processConsumableEffect(item, targetId, targetType);
     } else if (item.itemType === 'food') {
-      // Xử lý food items
-      effect = await processFoodEffect(item, targetId);
+      result = await processFoodEffect(item, targetId);
+    } else {
+      return sendErrorResponse(res, 400, 'Loại item không hỗ trợ sử dụng');
     }
 
-    res.json({ 
-      success: true, 
-      effect,
+    if (!result.success) {
+      return sendErrorResponse(res, 400, 'Không thể sử dụng item');
+    }
+
+    // Reduce quantity
+    if (item.quantity === 1) {
+      await Inventory.findByIdAndDelete(inventoryId);
+    } else {
+      await Inventory.findByIdAndUpdate(inventoryId, { $inc: { quantity: -1 } });
+    }
+
+    sendSuccessResponse(res, 200, { 
+      effect: result.effect,
       remainingQuantity: item.quantity - 1
-    });
+    }, 'Sử dụng item thành công');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi sử dụng item', err);
   }
-};
-
-// Helper functions
-async function processConsumableEffect(item, targetId, targetType) {
-  // Xử lý hiệu ứng của consumable items
-  // Có thể là heal, buff stats, etc.
-  return { type: 'consumable', effect: 'Item used successfully' };
-}
-
-async function processFoodEffect(item, petId) {
-  // Xử lý hiệu ứng của food items cho linh thú
-  const UserPet = require('../models/UserPet');
-  
-  const pet = await UserPet.findOneAndUpdate(
-    { _id: petId, user: req.user.id },
-    { 
-      lastFed: new Date(),
-      $inc: { happiness: 10 }
-    },
-    { new: true }
-  );
-
-  return { type: 'food', effect: 'Pet happiness increased', pet };
-} 
+}; 

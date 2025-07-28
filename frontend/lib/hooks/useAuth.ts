@@ -24,19 +24,29 @@ export const useAuth = () => {
     // Kiểm tra token khi component mount
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('useAuth - Starting checkAuth...');
+      
       if (typeof window === 'undefined') {
+        console.log('useAuth - Window is undefined, setting loading to false');
         setLoading(false);
         return;
       }
       
       const userToken = localStorage.getItem('userToken');
+      console.log('useAuth - User token from localStorage:', userToken ? 'exists' : 'not found');
+      
       if (!userToken) {
         // Thử load user data từ localStorage nếu có
         const savedUserData = localStorage.getItem('userData');
+        console.log('useAuth - Saved user data from localStorage:', savedUserData ? 'exists' : 'not found');
+        
         if (savedUserData) {
           try {
-            setUser(JSON.parse(savedUserData));
+            const parsedUserData = JSON.parse(savedUserData);
+            console.log('useAuth - Setting user from localStorage:', parsedUserData);
+            setUser(parsedUserData);
           } catch (error) {
+            console.error('useAuth - Error parsing saved user data:', error);
             localStorage.removeItem('userData');
           }
         }
@@ -45,11 +55,26 @@ export const useAuth = () => {
       }
 
       try {
-        const userData = await userAPI.getUserData(userToken);
+        console.log('useAuth - Fetching user data from API...');
+        const response = await userAPI.getUserData(userToken);
+        console.log('useAuth - API response:', response);
+        console.log('useAuth - Response type:', typeof response);
+        console.log('useAuth - Response keys:', response ? Object.keys(response) : 'null');
+        
+        // Extract user data from response
+        const userData = response.user || response;
+        console.log('useAuth - Extracted user data:', userData);
+        console.log('useAuth - User data type:', typeof userData);
+        console.log('useAuth - User data keys:', userData ? Object.keys(userData) : 'null');
+        console.log('useAuth - User username:', userData?.username);
+        console.log('useAuth - User coins:', userData?.coins);
+        console.log('useAuth - User gems:', userData?.gems);
+        
         setUser(userData);
         setToken(userToken);
         localStorage.setItem('userData', JSON.stringify(userData));
       } catch (error) {
+        console.error('useAuth - Error fetching user data:', error);
         localStorage.removeItem('userToken');
         localStorage.removeItem('userRole');
         localStorage.removeItem('userData');
@@ -94,6 +119,15 @@ export const useAuth = () => {
     };
   }, []);
 
+  // Debug logging for user state changes
+  useEffect(() => {
+    console.log('useAuth - User state changed:', user);
+  }, [user]);
+
+  useEffect(() => {
+    console.log('useAuth - Loading state changed:', loading);
+  }, [loading]);
+
   const login = async (username: string, password: string) => {
     try {
       const data = await authAPI.login({ username, password });
@@ -120,13 +154,9 @@ export const useAuth = () => {
 
         // Kiểm tra starter pet cho user thường
         if (data.role === 'user') {
-          try {
-            const starterPetData = await userPetAPI.checkStarterPetStatus(data.token);
-            if (starterPetData.success && !starterPetData.hasChosenStarterPet) {
-              return { success: true, user: userData, needsStarterPet: true };
-            }
-          } catch (error) {
-            console.error('Error checking starter pet status:', error);
+          // Kiểm tra trường hasChosenStarterPet từ user data
+          if (userData && !userData.hasChosenStarterPet) {
+            return { success: true, user: userData, needsStarterPet: true };
           }
         }
 

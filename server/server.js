@@ -24,6 +24,7 @@ app.use('/api/user', require('./routes/user'));
 app.use('/api/battle', require('./routes/battle'));
 app.use('/api/userpets', require('./routes/userPet'));
 app.use('/api/inventory', require('./routes/inventory'));
+app.use('/api/formations', require('./routes/formation'));
 app.use('/api/admin', require('./routes/admin'));
 
 app.listen(PORT, () => {

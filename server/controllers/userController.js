@@ -1,22 +1,25 @@
 const User = require('../models/User');
 const UserPet = require('../models/UserPet');
+const { 
+  sendErrorResponse, 
+  sendSuccessResponse, 
+  userPopulateOptions,
+  validateObjectOwnership
+} = require('../utils/controllerUtils');
 
 exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .select('-password')
-      .populate({
-        path: 'pets',
-        populate: {
-          path: 'pet',
-          select: 'name img element rarity'
-        }
-      });
+      .populate(userPopulateOptions);
     
-    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
-    res.json(user);
+    if (!user) {
+      return sendErrorResponse(res, 404, 'Không tìm thấy user');
+    }
+    
+    sendSuccessResponse(res, 200, { user });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải thông tin user', err);
   }
 };
 
@@ -25,17 +28,11 @@ exports.getUserByToken = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .select('-password')
-      .populate({
-        path: 'pets',
-        populate: {
-          path: 'pet',
-          select: 'name img element rarity'
-        }
-      });
+      .populate(userPopulateOptions);
     
     if (!user) {
       console.log('User not found for ID:', req.user.id);
-      return res.status(404).json({ error: 'Không tìm thấy user' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy user');
     }
     
     console.log('User found:', {
@@ -46,10 +43,9 @@ exports.getUserByToken = async (req, res) => {
       gems: user.gems
     });
     
-    res.json(user);
+    sendSuccessResponse(res, 200, { user });
   } catch (err) {
-    console.error('Error in getUserByToken:', err);
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải thông tin user', err);
   }
 };
 
@@ -70,10 +66,13 @@ exports.updateUser = async (req, res) => {
       { new: true }
     ).select('-password');
     
-    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
-    res.json(user);
+    if (!user) {
+      return sendErrorResponse(res, 404, 'Không tìm thấy user');
+    }
+    
+    sendSuccessResponse(res, 200, { user }, 'Cập nhật thông tin thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi cập nhật thông tin user', err);
   }
 };
 
@@ -90,27 +89,37 @@ exports.getUserProfile = async (req, res) => {
         }
       });
     
-    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
-    res.json(user);
+    if (!user) {
+      return sendErrorResponse(res, 404, 'Không tìm thấy user');
+    }
+    
+    sendSuccessResponse(res, 200, { user });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải profile user', err);
   }
 };
 
 exports.getUserStats = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('score coins gems');
-    const petCount = await UserPet.countDocuments({ user: req.user.id });
-    const activePet = await UserPet.findOne({ user: req.user.id, isActive: true })
-      .populate('pet', 'name img element');
+    const user = await User.findById(req.user.id).select('level exp score coins gems');
     
-    res.json({
-      user,
-      petCount,
-      activePet
-    });
+    if (!user) {
+      return sendErrorResponse(res, 404, 'Không tìm thấy user');
+    }
+    
+    // Tính toán thống kê bổ sung
+    const stats = {
+      level: user.level,
+      exp: user.exp,
+      score: user.score,
+      coins: user.coins,
+      gems: user.gems,
+      // Có thể thêm các thống kê khác ở đây
+    };
+    
+    sendSuccessResponse(res, 200, { stats });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải thống kê user', err);
   }
 };
 

@@ -13,9 +13,10 @@ router.delete('/:id', auth, formationController.deleteFormation);
 // ===== FORMATION MANAGEMENT ROUTES =====
 router.post('/:id/set-active', auth, formationController.setActiveFormation);
 router.post('/:id/add-pet', auth, formationController.addPetToFormation);
-router.delete('/:formationId/remove-pet/:position', auth, formationController.removePetFromFormation);
+router.delete('/:id/remove-pet/:position', auth, formationController.removePetFromFormation);
 router.post('/:id/move-pet', auth, formationController.movePetInFormation);
 router.get('/:id/available-pets', auth, formationController.getAvailablePets);
 router.post('/recalculate-combat-power', auth, formationController.recalculateAllFormations);
+router.post('/cleanup', auth, formationController.cleanupAllFormations);
 
 module.exports = router; 

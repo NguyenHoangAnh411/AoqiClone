@@ -10,7 +10,7 @@ interface ProfileModalProps {
 }
 
 export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
-  const { user, logout } = useAuthContext();
+  const { user, loading, logout } = useAuthContext();
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
@@ -18,6 +18,12 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
       setIsClosing(false);
     }
   }, [isOpen]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('ProfileModal - User data:', user);
+    console.log('ProfileModal - Loading:', loading);
+  }, [user, loading]);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -57,35 +63,43 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           <h3>👤 Hồ sơ người chơi</h3>
         </div>
         <div className={styles.profileContent}>
-          <div className={styles.profileAvatar}>
-            <div className={styles.avatar}>👤</div>
-            <h4>{username}</h4>
-            <p style={{ fontSize: '0.9rem', color: '#666', margin: '0.5rem 0' }}>
-              {email}
-            </p>
-          </div>
-          <div className={styles.profileStats}>
-            <div className={styles.statRow}>
-              <span>Điểm số:</span>
-              <span>{userScore}</span>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <p>Đang tải dữ liệu...</p>
             </div>
-            <div className={styles.statRow}>
-              <span>Linh thú:</span>
-              <span>{petsCount}</span>
-            </div>
-            <div className={styles.statRow}>
-              <span>💰 Coins:</span>
-              <span>{userCoins}</span>
-            </div>
-            <div className={styles.statRow}>
-              <span>💎 Gems:</span>
-              <span>{userGems}</span>
-            </div>
-            <div className={styles.statRow}>
-              <span>Ngày tham gia:</span>
-              <span>{joinDate}</span>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className={styles.profileAvatar}>
+                <div className={styles.avatar}>👤</div>
+                <h4>{username}</h4>
+                <p style={{ fontSize: '0.9rem', color: '#666', margin: '0.5rem 0' }}>
+                  {email}
+                </p>
+              </div>
+              <div className={styles.profileStats}>
+                <div className={styles.statRow}>
+                  <span>Điểm số:</span>
+                  <span>{userScore}</span>
+                </div>
+                <div className={styles.statRow}>
+                  <span>Linh thú:</span>
+                  <span>{petsCount}</span>
+                </div>
+                <div className={styles.statRow}>
+                  <span>💰 Coins:</span>
+                  <span>{userCoins}</span>
+                </div>
+                <div className={styles.statRow}>
+                  <span>💎 Gems:</span>
+                  <span>{userGems}</span>
+                </div>
+                <div className={styles.statRow}>
+                  <span>Ngày tham gia:</span>
+                  <span>{joinDate}</span>
+                </div>
+              </div>
+            </>
+          )}
           
           {/* Logout Button */}
           <div style={{ 
@@ -101,12 +115,11 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                 color: 'white',
                 border: 'none',
                 padding: '0.75rem 1.5rem',
-                borderRadius: '20px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '1rem',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)'
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                transition: 'all 0.3s ease'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -114,10 +127,10 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 107, 0.3)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              🚪 Đăng xuất
+              Đăng xuất
             </button>
           </div>
         </div>

@@ -568,3 +568,152 @@ export const petAPI = {
     return response.json();
   }
 };
+
+// ===== FORMATION API =====
+export const formationAPI = {
+  // Lấy tất cả đội hình của user
+  getUserFormations: async (token: string) => {
+    const response = await fetch(`${BASE_URL}/formation`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
+  // Lấy đội hình cụ thể
+  getFormation: async (token: string, formationId: string) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
+  // Tạo đội hình mới
+  createFormation: async (token: string, data: {
+    name: string;
+    pets?: Array<{
+      userPet: string;
+      position: number;
+      isActive: boolean;
+    }>;
+  }) => {
+    const response = await fetch(`${BASE_URL}/formation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  },
+
+  // Cập nhật đội hình
+  updateFormation: async (token: string, formationId: string, data: {
+    name?: string;
+    pets?: Array<{
+      userPet: string;
+      position: number;
+      isActive: boolean;
+    }>;
+  }) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  },
+
+  // Xóa đội hình
+  deleteFormation: async (token: string, formationId: string) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
+  // Set đội hình active
+  setActiveFormation: async (token: string, formationId: string) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}/set-active`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
+  // Thêm pet vào đội hình
+  addPetToFormation: async (token: string, formationId: string, data: {
+    userPetId: string;
+    position: number;
+  }) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}/add-pet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  },
+
+  // Xóa pet khỏi đội hình
+  removePetFromFormation: async (token: string, formationId: string, position: number) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}/remove-pet/${position}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
+  // Di chuyển pet trong đội hình
+  movePetInFormation: async (token: string, formationId: string, data: {
+    fromPosition: number;
+    toPosition: number;
+  }) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}/move-pet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  },
+
+  // Lấy danh sách pet có thể thêm vào đội hình
+  getAvailablePets: async (token: string, formationId: string) => {
+    const response = await fetch(`${BASE_URL}/formation/${formationId}/available-pets`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
+  // Cập nhật lại lực chiến cho tất cả đội hình
+  recalculateAllFormations: async (token: string) => {
+    const response = await fetch(`${BASE_URL}/formation/recalculate-combat-power`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  }
+};

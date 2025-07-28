@@ -1,6 +1,12 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { 
+  sendErrorResponse, 
+  sendSuccessResponse, 
+  validateRequiredFields 
+} = require('../utils/controllerUtils');
+
 const SECRET = 'aoqi_secret_key';
 
 exports.register = async (req, res) => {
@@ -8,20 +14,21 @@ exports.register = async (req, res) => {
     const { username, password, email, role } = req.body;
     
     // Validate required fields
-    if (!username || !password || !email) {
-      return res.status(400).json({ error: 'Thiếu thông tin username, password hoặc email' });
+    const validation = validateRequiredFields(req.body, ['username', 'password', 'email']);
+    if (!validation.isValid) {
+      return sendErrorResponse(res, 400, validation.error);
     }
 
     // Check if username already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ error: 'Tên tài khoản đã tồn tại' });
+      return sendErrorResponse(res, 400, 'Tên tài khoản đã tồn tại');
     }
 
     // Check if email already exists
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
-      return res.status(400).json({ error: 'Email đã tồn tại' });
+      return sendErrorResponse(res, 400, 'Email đã tồn tại');
     }
 
     // Hash password
@@ -44,7 +51,7 @@ exports.register = async (req, res) => {
       { expiresIn: '7d' }
     );
     
-    res.status(201).json({ 
+    sendSuccessResponse(res, 201, {
       token,
       username: user.username,
       userId: user._id,
@@ -56,8 +63,7 @@ exports.register = async (req, res) => {
       gems: user.gems
     });
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ error: 'Lỗi server: ' + err.message });
+    sendErrorResponse(res, 500, 'Lỗi server: ' + err.message, err);
   }
 };
 
@@ -65,17 +71,19 @@ exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Thiếu thông tin username hoặc password' });
+    // Validate required fields
+    const validation = validateRequiredFields(req.body, ['username', 'password']);
+    if (!validation.isValid) {
+      return sendErrorResponse(res, 400, validation.error);
     }
 
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(400).json({ error: 'Sai tài khoản hoặc mật khẩu' });
+      return sendErrorResponse(res, 400, 'Sai tài khoản hoặc mật khẩu');
     }
 
     if (!bcrypt.compareSync(password, user.password)) {
-      return res.status(400).json({ error: 'Sai tài khoản hoặc mật khẩu' });
+      return sendErrorResponse(res, 400, 'Sai tài khoản hoặc mật khẩu');
     }
 
     const token = jwt.sign(
@@ -84,12 +92,11 @@ exports.login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({ 
+    sendSuccessResponse(res, 200, { 
       token,
       role: user.role
     });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Lỗi server: ' + err.message });
+    sendErrorResponse(res, 500, 'Lỗi server: ' + err.message, err);
   }
 }; 

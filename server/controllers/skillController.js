@@ -1,20 +1,32 @@
 const Skill = require('../models/Skill');
 const Pet = require('../models/Pet');
+const { 
+  sendErrorResponse, 
+  sendSuccessResponse, 
+  validateRequiredFields,
+  petPopulateOptions
+} = require('../utils/controllerUtils');
 
 // Tạo skill set cho một pet (normal + ultimate + passive)
 exports.createSkillSet = async (req, res) => {
   try {
     const { petId, skillSet } = req.body;
     
+    // Validate required fields
+    const validation = validateRequiredFields(req.body, ['petId', 'skillSet']);
+    if (!validation.isValid) {
+      return sendErrorResponse(res, 400, validation.error);
+    }
+
     // Validate skill set
     if (!skillSet.normal || !skillSet.ultimate) {
-      return res.status(400).json({ error: 'Cần có ít nhất normal skill và ultimate skill' });
+      return sendErrorResponse(res, 400, 'Cần có ít nhất normal skill và ultimate skill');
     }
 
     // Kiểm tra pet tồn tại
     const pet = await Pet.findById(petId);
     if (!pet) {
-      return res.status(404).json({ error: 'Không tìm thấy pet' });
+      return sendErrorResponse(res, 404, 'Không tìm thấy pet');
     }
 
     // Tạo skillSetId duy nhất
@@ -74,17 +86,15 @@ exports.createSkillSet = async (req, res) => {
 
     await Pet.findByIdAndUpdate(petId, updateData);
 
-    res.status(201).json({
-      success: true,
-      message: 'Tạo skill set thành công',
+    sendSuccessResponse(res, 201, {
       skillSet: {
         normal: normalSkill,
         ultimate: ultimateSkill,
         passive: passiveSkill
       }
-    });
+    }, 'Tạo skill set thành công');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tạo skill set', err);
   }
 };
 
@@ -101,9 +111,9 @@ exports.getPetSkillSet = async (req, res) => {
       passive: skills.find(s => s.type === 'passive')
     };
 
-    res.json(skillSet);
+    sendSuccessResponse(res, 200, { skillSet });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải skill set', err);
   }
 };
 
@@ -118,9 +128,9 @@ exports.getSkills = async (req, res) => {
     if (petId) filter.petId = petId;
 
     const skills = await Skill.find(filter).populate('petId', 'name element');
-    res.json(skills);
+    sendSuccessResponse(res, 200, { skills });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải skills', err);
   }
 };
 
@@ -128,31 +138,49 @@ exports.getSkills = async (req, res) => {
 exports.getSkill = async (req, res) => {
   try {
     const skill = await Skill.findById(req.params.id).populate('petId', 'name element');
-    if (!skill) return res.status(404).json({ error: 'Không tìm thấy skill' });
-    res.json(skill);
+    if (!skill) return sendErrorResponse(res, 404, 'Không tìm thấy skill');
+    sendSuccessResponse(res, 200, { skill });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi tải skill', err);
   }
 };
 
 // Cập nhật skill
 exports.updateSkill = async (req, res) => {
   try {
-    const skill = await Skill.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!skill) return res.status(404).json({ error: 'Không tìm thấy skill' });
-    res.json(skill);
+    const { skillId } = req.params;
+    const updateData = req.body;
+    
+    const skill = await Skill.findByIdAndUpdate(
+      skillId,
+      updateData,
+      { new: true }
+    );
+
+    if (!skill) {
+      return sendErrorResponse(res, 404, 'Không tìm thấy skill');
+    }
+
+    sendSuccessResponse(res, 200, { skill }, 'Cập nhật skill thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi cập nhật skill', err);
   }
 };
 
 // Xóa skill
 exports.deleteSkill = async (req, res) => {
   try {
-    await Skill.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
+    const { skillId } = req.params;
+    
+    const skill = await Skill.findByIdAndDelete(skillId);
+
+    if (!skill) {
+      return sendErrorResponse(res, 404, 'Không tìm thấy skill');
+    }
+
+    sendSuccessResponse(res, 200, {}, 'Xóa skill thành công');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi xóa skill', err);
   }
 };
 
@@ -169,9 +197,35 @@ exports.deletePetSkillSet = async (req, res) => {
       $unset: { normalSkill: 1, ultimateSkill: 1, passiveSkill: 1 }
     });
 
-    res.json({ success: true, message: 'Đã xóa toàn bộ skill set của pet' });
+    sendSuccessResponse(res, 200, {}, 'Đã xóa toàn bộ skill set của pet');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, 'Lỗi khi xóa skill set của pet', err);
+  }
+};
+
+// Lấy tất cả skills của một pet
+exports.getPetSkills = async (req, res) => {
+  try {
+    const { petId } = req.params;
+    
+    const skills = await Skill.find({ petId }).sort({ type: 1 });
+
+    sendSuccessResponse(res, 200, { skills });
+  } catch (err) {
+    sendErrorResponse(res, 500, 'Lỗi khi tải skills', err);
+  }
+};
+
+// Lấy skill theo type
+exports.getSkillsByType = async (req, res) => {
+  try {
+    const { type } = req.params;
+    
+    const skills = await Skill.find({ type }).sort({ name: 1 });
+
+    sendSuccessResponse(res, 200, { skills });
+  } catch (err) {
+    sendErrorResponse(res, 500, 'Lỗi khi tải skills theo type', err);
   }
 };
 
@@ -179,8 +233,8 @@ exports.deletePetSkillSet = async (req, res) => {
 exports.createSkill = async (req, res) => {
   try {
     const skill = await Skill.create(req.body);
-    res.status(201).json(skill);
+    sendSuccessResponse(res, 201, { skill }, 'Tạo skill thành công');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendErrorResponse(res, 400, 'Lỗi khi tạo skill', err);
   }
 }; 
