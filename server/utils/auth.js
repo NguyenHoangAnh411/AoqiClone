@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const SECRET = 'aoqi_secret_key';
 
 // Middleware xác thực user
-module.exports = function (req, res, next) {
+const auth = function (req, res, next) {
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Chưa đăng nhập' });
   try {
@@ -15,7 +15,9 @@ module.exports = function (req, res, next) {
 };
 
 // Middleware kiểm tra quyền admin
-module.exports.isAdmin = function (req, res, next) {
+const isAdmin = function (req, res, next) {
   if (req.user && req.user.role === 'admin') return next();
   return res.status(403).json({ error: 'Bạn không có quyền admin' });
-}; 
+};
+
+module.exports = { auth, isAdmin }; 

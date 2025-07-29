@@ -68,6 +68,21 @@ const calculateCombatPower = (hp, attack, defense, speed, rarity = 'common', ele
   return Math.floor(baseCombatPower);
 };
 
+// New function to calculate combat power with Element and Rarity objects
+const calculateCombatPowerWithObjects = (hp, attack, defense, speed, rarity, element) => {
+  // Use standard combat power weights (element doesn't affect combat power calculation)
+  const weights = {
+    hp: 0.2,
+    attack: 2.5,
+    defense: 1.8,
+    speed: 1.2
+  };
+  
+  const baseCombatPower = (hp * weights.hp) + (attack * weights.attack) + (defense * weights.defense) + (speed * weights.speed);
+  
+  return Math.floor(baseCombatPower);
+};
+
 // Tính chỉ số thực tế dựa trên base stats và level (cải tiến)
 const calculateStats = (baseStats, level, rarity = 'common', element = 'water') => {
   // Hệ số tăng trưởng theo level (không tuyến tính) - giống Aoqi Legend
@@ -87,6 +102,31 @@ const calculateStats = (baseStats, level, rarity = 'common', element = 'water') 
     accuracy: Math.floor((baseStats.baseAccuracy || 100) * baseMultiplier),
     evasion: Math.floor((baseStats.baseEvasion || 10) * baseMultiplier),
     criticalRate: Math.floor((baseStats.baseCriticalRate || 5) * baseMultiplier)
+  };
+};
+
+// New function to calculate stats with Element and Rarity objects
+const calculateStatsWithObjects = (baseStats, level, rarity, element) => {
+  if (!rarity) {
+    return calculateStats(baseStats, level, 'common', 'water');
+  }
+  
+  // Hệ số tăng trưởng theo level (không tuyến tính) - giống Aoqi Legend
+  const levelMultiplier = 1 + Math.pow(level - 1, 0.8) * 0.15;
+  
+  // Use only rarity stat modifiers (element doesn't affect base stats)
+  const rarityModifiers = rarity.statMultipliers || {
+    hp: 1.0, attack: 1.0, defense: 1.0, speed: 1.0, accuracy: 1.0, evasion: 1.0, criticalRate: 1.0
+  };
+  
+  return {
+    hp: Math.floor(baseStats.baseHp * levelMultiplier * rarityModifiers.hp),
+    attack: Math.floor(baseStats.baseAttack * levelMultiplier * rarityModifiers.attack),
+    defense: Math.floor(baseStats.baseDefense * levelMultiplier * rarityModifiers.defense),
+    speed: Math.floor(baseStats.baseSpeed * levelMultiplier * rarityModifiers.speed),
+    accuracy: Math.floor((baseStats.baseAccuracy || 100) * levelMultiplier * rarityModifiers.accuracy),
+    evasion: Math.floor((baseStats.baseEvasion || 10) * levelMultiplier * rarityModifiers.evasion),
+    criticalRate: Math.floor((baseStats.baseCriticalRate || 5) * levelMultiplier * rarityModifiers.criticalRate)
   };
 };
 
@@ -181,9 +221,101 @@ const getElementalEffectiveness = (attackerElement, defenderElement) => {
   return effectiveness[attackerElement]?.[defenderElement] || 1.0;
 };
 
+// Pet validation functions
+const validatePetData = (petData) => {
+  const errors = [];
+  
+  // Required fields
+  if (!petData.name) errors.push('Pet name is required');
+  if (!petData.img) errors.push('Pet image is required');
+  if (!petData.element) errors.push('Pet element is required');
+  if (!petData.rarity) errors.push('Pet rarity is required');
+  
+  // Base stats validation
+  if (petData.baseHp < 100) errors.push('Base HP must be at least 100');
+  if (petData.baseAttack < 10) errors.push('Base Attack must be at least 10');
+  if (petData.baseDefense < 5) errors.push('Base Defense must be at least 5');
+  if (petData.baseSpeed < 10) errors.push('Base Speed must be at least 10');
+  
+  // Accuracy and evasion validation
+  if (petData.baseAccuracy < 0 || petData.baseAccuracy > 100) {
+    errors.push('Base Accuracy must be between 0 and 100');
+  }
+  if (petData.baseEvasion < 0 || petData.baseEvasion > 100) {
+    errors.push('Base Evasion must be between 0 and 100');
+  }
+  if (petData.baseCriticalRate < 0 || petData.baseCriticalRate > 100) {
+    errors.push('Base Critical Rate must be between 0 and 100');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+// Pet creation helper
+const createPetWithValidation = async (petData, Element, Rarity) => {
+  const validation = validatePetData(petData);
+  if (!validation.isValid) {
+    throw new Error(`Pet validation failed: ${validation.errors.join(', ')}`);
+  }
+  
+  // Validate element and rarity exist
+  const element = await Element.findById(petData.element);
+  if (!element) {
+    throw new Error('Invalid element ID');
+  }
+  
+  const rarity = await Rarity.findById(petData.rarity);
+  if (!rarity) {
+    throw new Error('Invalid rarity ID');
+  }
+  
+  return petData;
+};
+
+// Pet search and filter functions
+const searchPets = async (Pet, filters = {}) => {
+  const query = { isActive: true };
+  
+  if (filters.element) query.element = filters.element;
+  if (filters.rarity) query.rarity = filters.rarity;
+  if (filters.battleStyle) query.battleStyle = filters.battleStyle;
+  if (filters.isStarter !== undefined) query.isStarter = filters.isStarter;
+  if (filters.name) query.name = { $regex: filters.name, $options: 'i' };
+  
+  return await Pet.find(query)
+    .populate('element rarity')
+    .sort({ name: 1 });
+};
+
+// Get pets by element
+const getPetsByElement = async (Pet, elementId) => {
+  return await Pet.find({ element: elementId, isActive: true })
+    .populate('element rarity')
+    .sort({ name: 1 });
+};
+
+// Get pets by rarity
+const getPetsByRarity = async (Pet, rarityId) => {
+  return await Pet.find({ rarity: rarityId, isActive: true })
+    .populate('element rarity')
+    .sort({ name: 1 });
+};
+
+// Get starter pets
+const getStarterPets = async (Pet) => {
+  return await Pet.find({ isStarter: true, isActive: true })
+    .populate('element rarity')
+    .sort({ name: 1 });
+};
+
 module.exports = {
   calculateCombatPower,
   calculateStats,
+  calculateCombatPowerWithObjects,
+  calculateStatsWithObjects,
   calculateActualCombatPower,
   calculateBaseCombatPower,
   updateUserPetStats,
@@ -192,6 +324,12 @@ module.exports = {
   calculatePetRating,
   getPetClass,
   getElementalEffectiveness,
+  validatePetData,
+  createPetWithValidation,
+  searchPets,
+  getPetsByElement,
+  getPetsByRarity,
+  getStarterPets,
   RARITY_MULTIPLIERS,
   ELEMENT_MULTIPLIERS,
   RARITY_EXP_MULTIPLIERS

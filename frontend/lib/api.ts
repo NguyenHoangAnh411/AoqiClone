@@ -169,31 +169,85 @@ export const adminAPI = {
     return response.json();
   },
 
+  getSkill: async (token: string, skillId: string) => {
+    const response = await fetch(`${BASE_URL}/admin/skills/${skillId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
+  createSkill: async (token: string, data: {
+    name: string;
+    description?: string;
+    type: 'normal' | 'ultimate' | 'passive';
+    petId: string;
+    power?: number;
+    energyCost?: number;
+    energyGeneration?: number;
+    accuracy?: number;
+    criticalRate?: number;
+    targetType?: string;
+    range?: number;
+    effects?: any;
+    conditions?: any;
+    requiredLevel?: number;
+    comboBonus?: number;
+    formationBonus?: number;
+  }) => {
+    const response = await fetch(`${BASE_URL}/admin/skills`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  },
+
   createSkillSet: async (token: string, data: {
     petId: string;
     skillSet: {
       normal: {
         name: string;
         description: string;
-        power: number;
-        energyCost: number;
-        accuracy: number;
-        criticalRate: number;
-        effects?: SkillEffects;
+        power?: number;
+        energyGeneration?: number;
+        accuracy?: number;
+        criticalRate?: number;
+        targetType?: string;
+        range?: number;
+        effects?: any;
+        conditions?: any;
+        requiredLevel?: number;
+        comboBonus?: number;
+        formationBonus?: number;
       };
       ultimate: {
         name: string;
         description: string;
-        power: number;
-        energyCost: number;
-        accuracy: number;
-        criticalRate: number;
-        effects?: SkillEffects;
+        power?: number;
+        energyCost?: number;
+        accuracy?: number;
+        criticalRate?: number;
+        targetType?: string;
+        range?: number;
+        effects?: any;
+        conditions?: any;
+        requiredLevel?: number;
+        comboBonus?: number;
+        formationBonus?: number;
       };
       passive?: {
         name: string;
         description: string;
-        effects?: SkillEffects;
+        targetType?: string;
+        effects?: any;
+        conditions?: any;
+        requiredLevel?: number;
+        formationBonus?: number;
       };
     };
   }) => {

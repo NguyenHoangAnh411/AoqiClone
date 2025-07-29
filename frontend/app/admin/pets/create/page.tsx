@@ -29,9 +29,11 @@ interface SkillForm {
     name: string; 
     description: string; 
     power: number; 
-    energyCost: number;
+    energyGeneration: number;
     accuracy: number;
     criticalRate: number;
+    targetType: string;
+    range: number;
     effects?: SkillEffects;
   };
   ultimate: { 
@@ -41,11 +43,14 @@ interface SkillForm {
     energyCost: number;
     accuracy: number;
     criticalRate: number;
+    targetType: string;
+    range: number;
     effects?: SkillEffects;
   };
   passive: { 
     name: string; 
     description: string;
+    targetType: string;
     effects?: SkillEffects;
   };
 }
@@ -78,9 +83,11 @@ export default function CreatePet() {
       name: '', 
       description: '', 
       power: 0, 
-      energyCost: 20,
+      energyGeneration: 0,
       accuracy: 90,
-      criticalRate: 5
+      criticalRate: 5,
+      targetType: 'self',
+      range: 1
     },
     ultimate: { 
       name: '', 
@@ -88,11 +95,14 @@ export default function CreatePet() {
       power: 0, 
       energyCost: 50,
       accuracy: 80,
-      criticalRate: 15
+      criticalRate: 15,
+      targetType: 'self',
+      range: 1
     },
     passive: { 
       name: '', 
-      description: '' 
+      description: '',
+      targetType: 'self'
     }
   });
 
@@ -427,15 +437,48 @@ export default function CreatePet() {
                       />
                     </div>
                     <div className={styles.inputGroup}>
-                      <label>⚡ Energy Cost</label>
+                      <label>⚡ Energy Generation</label>
                       <input
                         type="number"
-                        placeholder="Energy Cost"
-                        value={skillForm.normal.energyCost}
+                        placeholder="Energy Generation"
+                        value={skillForm.normal.energyGeneration}
                         onChange={(e) => setSkillForm(prev => ({
                           ...prev,
-                          normal: { ...prev.normal, energyCost: parseInt(e.target.value) || 0 }
+                          normal: { ...prev.normal, energyGeneration: parseInt(e.target.value) || 0 }
                         }))}
+                        required={createSkills}
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>🎯 Target Type</label>
+                      <select
+                        value={skillForm.normal.targetType}
+                        onChange={(e) => setSkillForm(prev => ({
+                          ...prev,
+                          normal: { ...prev.normal, targetType: e.target.value }
+                        }))}
+                        required={createSkills}
+                      >
+                        <option value="single">Single Target</option>
+                        <option value="all_enemies">All Enemies</option>
+                        <option value="all_allies">All Allies</option>
+                        <option value="self">Self</option>
+                        <option value="random_enemy">Random Enemy</option>
+                        <option value="random_ally">Random Ally</option>
+                      </select>
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>📏 Range</label>
+                      <input
+                        type="number"
+                        placeholder="Range"
+                        value={skillForm.normal.range}
+                        onChange={(e) => setSkillForm(prev => ({
+                          ...prev,
+                          normal: { ...prev.normal, range: parseInt(e.target.value) || 1 }
+                        }))}
+                        min="1"
+                        max="5"
                         required={createSkills}
                       />
                     </div>
@@ -810,6 +853,39 @@ export default function CreatePet() {
                       />
                     </div>
                     <div className={styles.inputGroup}>
+                      <label>🎯 Target Type</label>
+                      <select
+                        value={skillForm.ultimate.targetType}
+                        onChange={(e) => setSkillForm(prev => ({
+                          ...prev,
+                          ultimate: { ...prev.ultimate, targetType: e.target.value }
+                        }))}
+                        required={createSkills}
+                      >
+                        <option value="single">Single Target</option>
+                        <option value="all_enemies">All Enemies</option>
+                        <option value="all_allies">All Allies</option>
+                        <option value="self">Self</option>
+                        <option value="random_enemy">Random Enemy</option>
+                        <option value="random_ally">Random Ally</option>
+                      </select>
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>📏 Range</label>
+                      <input
+                        type="number"
+                        placeholder="Range"
+                        value={skillForm.ultimate.range}
+                        onChange={(e) => setSkillForm(prev => ({
+                          ...prev,
+                          ultimate: { ...prev.ultimate, range: parseInt(e.target.value) || 1 }
+                        }))}
+                        min="1"
+                        max="5"
+                        required={createSkills}
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
                       <label>🎯 Accuracy (%)</label>
                       <input
                         type="number"
@@ -1150,6 +1226,23 @@ export default function CreatePet() {
                       passive: { ...prev.passive, description: e.target.value }
                     }))}
                   />
+                  
+                  <div className={styles.inputGroup}>
+                    <label>🎯 Target Type</label>
+                    <select
+                      value={skillForm.passive.targetType}
+                      onChange={(e) => setSkillForm(prev => ({
+                        ...prev,
+                        passive: { ...prev.passive, targetType: e.target.value }
+                      }))}
+                      required={createSkills}
+                    >
+                      <option value="self">Self</option>
+                      <option value="single">Single Target</option>
+                      <option value="all_enemies">All Enemies</option>
+                      <option value="all_allies">All Allies</option>
+                    </select>
+                  </div>
                   
                   {/* Effects Section for Passive Skill */}
                   <div className={styles.effectsSection}>
