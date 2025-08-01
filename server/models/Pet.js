@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const petSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, unique: true },
   img: { type: String, required: true },
   description: String,
   
@@ -59,7 +59,19 @@ const petSchema = new mongoose.Schema({
   
   // Metadata
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+
+  // Team Buff
+  teamBuff: {
+    stat: { type: String, enum: ['attack', 'defense', 'hp', 'speed'], required: false },
+    value: { type: Number, required: false },
+    type: { type: String, enum: ['percent', 'flat'], default: 'percent' },
+    requirement: {
+      type: { type: String, enum: ['element', 'species'], required: false },
+      value: { type: String, required: false },
+      count: { type: Number, required: false }
+    }
+  }
 });
 
 // ==================== METHODS ====================
@@ -514,11 +526,6 @@ petSchema.methods.createUserPetData = function(userId) {
     actualCombatPower: 0,
     totalDamageDealt: 0,
     totalDamageTaken: 0,
-    equipment: {
-      weapon: null,
-      armor: null,
-      accessory: null
-    },
     skillLevels: {
       normalSkill: 1,
       ultimateSkill: 1,
@@ -559,6 +566,5 @@ petSchema.index({ element: 1, rarity: 1 });
 petSchema.index({ isActive: 1 });
 petSchema.index({ isStarter: 1 });
 petSchema.index({ evolutionStage: 1 });
-petSchema.index({ name: 1 });
 
 module.exports = mongoose.model('Pet', petSchema); 

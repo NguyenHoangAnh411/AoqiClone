@@ -1,494 +1,675 @@
+const UserPet = require('../models/UserPet');
 const Pet = require('../models/Pet');
 const User = require('../models/User');
-const Skill = require('../models/Skill');
-const UserPet = require('../models/UserPet');
 const UserBag = require('../models/UserBag');
-const { updateUserPetStats } = require('../utils/petUtils');
-const { 
-  calculatePetInfo,
-  singleUserPetPopulateOptions,
-  petPopulateOptions,
-  sendErrorResponse,
-  sendSuccessResponse,
-  validateObjectOwnership
-} = require('../utils/controllerUtils');
+const Formation = require('../models/Formation');
 
-class UserPetController {
+// ==================== PUBLIC APIs ====================
 
-  async getStarterPets(req, res) {
-    try {
-      const starterPets = await Pet.find({ isStarter: true })
-        .populate(petPopulateOptions);
-  
-      sendSuccessResponse(res, 200, { starterPets });
-    } catch (err) {
-      sendErrorResponse(res, 500, 'Lỗi khi tải danh sách linh thú mở đầu', err);
+/**
+ * @route   GET /api/userpets
+ * @desc    Lấy danh sách pets của user
+ * @access  Private
+ */
+const getUserPets = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { location, page = 1, limit = 20, sortBy = 'level', sortOrder = 'desc' } = req.query;
+    
+    // Build query
+    const query = { user: userId };
+    if (location && ['bag', 'storage'].includes(location)) {
+      query.location = location;
     }
-  };
-
-  async chooseStarterPet(req, res) {
-    try {
-      const { petId } = req.body;
-
-      // Lấy hoặc tạo UserBag cho user
-      let userBag = await UserBag.findOne({ user: req.user.id });
-      if (!userBag) {
-        userBag = new UserBag({ user: req.user.id });
-        await userBag.save();
-      }
-
-      // Kiểm tra user đã có starter pet chưa
-      const existingStarterPet = await UserPet.findOne({
-        user: req.user.id,
-        'pet.isStarter': true
-      }).populate('pet');
-
-      if (existingStarterPet) {
-        return res.status(400).json({ 
-          error: 'Bạn đã có linh thú mở đầu rồi' 
-        });
-      }
-
-      // Kiểm tra pet có phải là starter pet không
-      const starterPet = await Pet.findOne({ 
-        _id: petId, 
-        isStarter: true 
-      });
-
-      if (!starterPet) {
-        return res.status(400).json({ 
-          error: 'Linh thú này không phải là linh thú mở đầu' 
-        });
-      }
-
-      // Kiểm tra số pet trong túi hiện tại
-      const bagCount = await UserPet.countDocuments({ 
-        user: req.user.id, 
-        location: 'bag' 
-      });
-
-      // Cập nhật currentSize trong UserBag
-      userBag.currentSize = bagCount;
-      await userBag.save();
-
-      const location = userBag.canAddPet() ? 'bag' : 'storage';
-
-      // Tạo UserPet mới
-      const newUserPet = new UserPet({
-        user: req.user.id,
-        pet: petId,
-        level: 1,
-        exp: 0,
-        hp: starterPet.baseHp,
-        attack: starterPet.baseAttack,
-        defense: starterPet.baseDefense,
-        speed: starterPet.baseSpeed,
-        accuracy: starterPet.baseAccuracy,
-        evasion: starterPet.baseEvasion,
-        criticalRate: starterPet.baseCriticalRate,
-        location: location
-      });
-
-      await newUserPet.save();
-
-      // Cập nhật trường hasChosenStarterPet trong User model
-      await User.findByIdAndUpdate(req.user.id, {
-        hasChosenStarterPet: true
-      });
-
-      // Populate thông tin pet
-      const userPetWithInfo = await UserPet.findById(newUserPet._id).populate({
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' },
-          { path: 'evolutionPet' }
-        ]
-      });
-
-      // Cập nhật currentSize nếu pet được đặt vào túi
-      if (location === 'bag') {
-        userBag.currentSize += 1;
-        await userBag.save();
-      }
-
-      res.json({ 
-        success: true, 
-        message: `Đã chọn linh thú mở đầu ${starterPet.name} thành công`,
-        userPet: userPetWithInfo,
-        location: location,
-        bagInfo: {
-          current: userBag.currentSize,
-          max: userBag.maxSize,
-          available: userBag.getAvailableSlots()
+    
+    // Build sort
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    
+    // Pagination
+    const skip = (page - 1) * limit;
+    
+    const userPets = await UserPet.find(query)
+      .populate('pet', 'name img element rarity isActive')
+      .populate('pet.element', 'name displayName icon color')
+      .populate('pet.rarity', 'name displayName icon color')
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const total = await UserPet.countDocuments(query);
+    
+    // Get summary info for each pet
+    const petsWithSummary = await Promise.all(
+      userPets.map(async (userPet) => {
+        const summary = await userPet.getSummary();
+        return summary;
+      })
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        pets: petsWithSummary,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit)
         }
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  };
-
-  // Lấy danh sách pet trong túi (bag)
-  async getBagPets(req, res) {
-    try {
-      // Lấy hoặc tạo UserBag cho user
-      let userBag = await UserBag.findOne({ user: req.user.id });
-      if (!userBag) {
-        userBag = new UserBag({ user: req.user.id });
-        await userBag.save();
       }
+    });
+    
+  } catch (error) {
+    console.error('Error getting user pets:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy danh sách pets'
+    });
+  }
+};
 
-      const bagPets = await UserPet.find({ 
-        user: req.user.id, 
-        location: 'bag' 
-      }).populate({
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' },
-          { path: 'evolutionPet' }
-        ]
+/**
+ * @route   GET /api/userpets/:userPetId
+ * @desc    Lấy chi tiết pet của user
+ * @access  Private
+ */
+const getUserPetDetail = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId })
+      .populate('pet')
+      .populate('pet.element', 'name displayName icon color effectivenessMatrix')
+      .populate('pet.rarity', 'name displayName icon color dropRate expMultiplier');
+    
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
       });
-
-      // Cập nhật currentSize trong UserBag
-      userBag.currentSize = bagPets.length;
-      await userBag.save();
-
-      // Tính toán thông tin exp và level up cho mỗi pet
-      const enrichedBagPets = bagPets.map(userPet => calculatePetInfo(userPet));
-
-      res.json({ 
-        success: true, 
-        bagPets: enrichedBagPets,
-        bagInfo: {
-          current: userBag.currentSize,
-          max: userBag.maxSize,
-          available: userBag.getAvailableSlots()
-        }
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
-  };
+    
+    // Get full info including skills and equipment
+    const fullInfo = await userPet.getFullInfo();
+    
+    res.json({
+      success: true,
+      data: fullInfo
+    });
+    
+  } catch (error) {
+    console.error('Error getting user pet detail:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy chi tiết pet'
+    });
+  }
+};
 
-  // Lấy danh sách pet trong kho (storage)
-  async getStoragePets(req, res) {
-    try {
-      const storagePets = await UserPet.find({ 
-        user: req.user.id, 
-        location: 'storage' 
-      }).populate({
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' },
-          { path: 'evolutionPet' }
-        ]
+/**
+ * @route   POST /api/userpets
+ * @desc    Tạo pet mới cho user (từ pet template)
+ * @access  Private
+ */
+const createUserPet = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { petId, location = 'storage' } = req.body;
+    
+    // Validate input
+    if (!petId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pet ID là bắt buộc'
       });
-
-      // Tính toán thông tin exp và level up cho mỗi pet
-      const enrichedStoragePets = storagePets.map(userPet => calculatePetInfo(userPet));
-
-      res.json({ 
-        success: true, 
-        storagePets: enrichedStoragePets,
-        storageCount: storagePets.length
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
-  };
-
-  // Di chuyển pet từ kho vào túi
-  async movePetToBag(req, res) {
-    try {
-      const { userPetId, replacePetId } = req.body;
-
-      // Lấy hoặc tạo UserBag cho user
-      let userBag = await UserBag.findOne({ user: req.user.id });
-      if (!userBag) {
-        userBag = new UserBag({ user: req.user.id });
-        await userBag.save();
-      }
-
-      // Kiểm tra số pet trong túi hiện tại
-      const bagCount = await UserPet.countDocuments({ 
-        user: req.user.id, 
-        location: 'bag' 
+    
+    if (!['bag', 'storage'].includes(location)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location phải là "bag" hoặc "storage"'
       });
-
-      // Cập nhật currentSize trong UserBag
-      userBag.currentSize = bagCount;
-
-      // Kiểm tra pet có tồn tại và thuộc về user không
-      const userPet = await UserPet.findOne({ 
-        _id: userPetId, 
-        user: req.user.id,
-        location: 'storage'
+    }
+    
+    // Check if pet template exists and is active
+    const petTemplate = await Pet.findOne({ _id: petId, isActive: true });
+    if (!petTemplate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet template hoặc pet không active'
       });
-
-      if (!userPet) {
-        return res.status(404).json({ 
-          error: 'Không tìm thấy linh thú trong kho' 
-        });
-      }
-
-      // Nếu túi đầy và không có pet để thay thế
-      if (userBag.isFull() && !replacePetId) {
-        return res.status(400).json({ 
+    }
+    
+    // Check bag capacity if adding to bag
+    if (location === 'bag') {
+      const userBag = await UserBag.findOne({ user: userId });
+      if (userBag && userBag.pets.length >= userBag.capacity) {
+        return res.status(400).json({
           success: false,
-          error: 'BAG_FULL',
-          message: `Túi đã đầy! Bạn cần chọn một linh thú trong túi để thay thế.`,
-          bagInfo: {
-            current: userBag.currentSize,
-            max: userBag.maxSize,
-            available: userBag.getAvailableSlots()
-          }
+          message: 'Bag đã đầy, không thể thêm pet'
         });
       }
-
-      // Nếu túi đầy và có pet để thay thế
-      if (userBag.isFull() && replacePetId) {
-        // Kiểm tra pet thay thế có tồn tại và thuộc về user không
-        const replacePet = await UserPet.findOne({ 
-          _id: replacePetId, 
-          user: req.user.id,
-          location: 'bag'
-        });
-
-        if (!replacePet) {
-          return res.status(404).json({ 
-            error: 'Không tìm thấy linh thú thay thế trong túi' 
-          });
-        }
-
-        // Di chuyển pet thay thế vào storage
-        await UserPet.findByIdAndUpdate(
-          replacePetId,
-          { location: 'storage' }
-        );
-      }
-
-      // Di chuyển pet vào túi
-      const updatedPet = await UserPet.findByIdAndUpdate(
-        userPetId,
-        { location: 'bag' },
-        { new: true }
-      ).populate({
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' },
-          { path: 'evolutionPet' }
-        ]
-      });
-
-      // Cập nhật currentSize trong UserBag (không thay đổi vì đã thay thế)
-      if (!userBag.isFull()) {
-        userBag.currentSize += 1;
-      }
-      await userBag.save();
-
-      res.json({ 
-        success: true, 
-        message: userBag.isFull() ? 'Đã thay thế linh thú trong túi' : 'Đã di chuyển linh thú vào túi',
-        userPet: updatedPet,
-        bagInfo: {
-          current: userBag.currentSize,
-          max: userBag.maxSize,
-          available: userBag.getAvailableSlots()
-        }
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
-  };
-
-  // Di chuyển pet từ túi vào kho
-  async movePetToStorage(req, res) {
-    try {
-      const { userPetId } = req.body;
-
-      // Lấy hoặc tạo UserBag cho user
-      let userBag = await UserBag.findOne({ user: req.user.id });
-      if (!userBag) {
-        userBag = new UserBag({ user: req.user.id });
-        await userBag.save();
+    
+    // Create new user pet
+    const newUserPet = new UserPet({
+      user: userId,
+      pet: petId,
+      level: 1,
+      exp: 0,
+      location: location,
+      evolutionStage: 1,
+      skillLevels: {
+        normalSkill: 1,
+        ultimateSkill: 1,
+        passiveSkill: 1
       }
-
-      // Kiểm tra pet có tồn tại và thuộc về user không
-      const userPet = await UserPet.findOne({ 
-        _id: userPetId, 
-        user: req.user.id,
-        location: 'bag'
-      });
-
-      if (!userPet) {
-        return res.status(404).json({ 
-          error: 'Không tìm thấy linh thú trong túi' 
-        });
-      }
-
-      // Di chuyển pet vào kho (cho phép di chuyển cả pet active)
-      const updatedPet = await UserPet.findByIdAndUpdate(
-        userPetId,
-        { location: 'storage' },
-        { new: true }
-      ).populate({
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' },
-          { path: 'evolutionPet' }
-        ]
-      });
-
-      // Cập nhật currentSize trong UserBag
-      userBag.currentSize = Math.max(0, userBag.currentSize - 1);
-      await userBag.save();
-
-      res.json({ 
-        success: true, 
-        message: 'Đã di chuyển linh thú vào kho',
-        userPet: updatedPet,
-        bagInfo: {
-          current: userBag.currentSize,
-          max: userBag.maxSize,
-          available: userBag.getAvailableSlots()
-        }
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    });
+    
+    // Calculate initial stats
+    await newUserPet.calculateActualStats();
+    await newUserPet.calculateCombatPower();
+    await newUserPet.updateEvolveStatus();
+    
+    await newUserPet.save();
+    
+    // Add to bag if location is bag
+    if (location === 'bag') {
+      await UserBag.findOneAndUpdate(
+        { user: userId },
+        { $push: { pets: newUserPet._id } },
+        { upsert: true }
+      );
     }
-  };
+    
+    // Get full info for response
+    const fullInfo = await newUserPet.getFullInfo();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Tạo pet thành công',
+      data: fullInfo
+    });
+    
+  } catch (error) {
+    console.error('Error creating user pet:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi tạo pet'
+    });
+  }
+};
 
-  // Lấy tất cả pet của user (cả túi và kho)
-  async getUserPets(req, res) {
-    try {
-      const userPets = await UserPet.find({ 
-        user: req.user.id 
-      }).populate({
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' },
-          { path: 'evolutionPet' }
-        ]
+/**
+ * @route   PUT /api/userpets/:userPetId/move
+ * @desc    Di chuyển pet giữa bag và storage
+ * @access  Private
+ */
+const moveUserPet = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    const { newLocation } = req.body;
+    
+    if (!['bag', 'storage'].includes(newLocation)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location phải là "bag" hoặc "storage"'
       });
-
-      // Tính toán thông tin exp và level up cho mỗi pet
-      const enrichedUserPets = userPets.map(userPet => calculatePetInfo(userPet));
-
-      // Phân loại pet theo vị trí
-      const bagPets = enrichedUserPets.filter(pet => pet.location === 'bag');
-      const storagePets = enrichedUserPets.filter(pet => pet.location === 'storage');
-
-      res.json({ 
-        success: true, 
-        userPets: enrichedUserPets,
-        summary: {
-          total: userPets.length,
-          bag: bagPets.length,
-          storage: storagePets.length
-        }
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
-  };
-
-
-
-  // Nhận pet (ưu tiên đưa vào túi trước, nếu đầy thì vào kho)
-  async receivePet(req, res) {
-    try {
-      const { petId, level = 1, exp = 0 } = req.body;
-
-      // Lấy hoặc tạo UserBag cho user
-      let userBag = await UserBag.findOne({ user: req.user.id });
-      if (!userBag) {
-        userBag = new UserBag({ user: req.user.id });
-        await userBag.save();
-      }
-
-      // Kiểm tra pet có tồn tại không
-      const petTemplate = await Pet.findById(petId);
-      if (!petTemplate) {
-        return res.status(404).json({ 
-          error: 'Không tìm thấy linh thú' 
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    const oldLocation = userPet.location;
+    
+    // Check bag capacity if moving to bag
+    if (newLocation === 'bag') {
+      const userBag = await UserBag.findOne({ user: userId });
+      if (userBag && userBag.pets.length >= userBag.capacity) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bag đã đầy, không thể thêm pet'
         });
       }
-
-      // Kiểm tra số pet trong túi hiện tại
-      const bagCount = await UserPet.countDocuments({ 
-        user: req.user.id, 
-        location: 'bag' 
-      });
-
-      // Cập nhật currentSize trong UserBag
-      userBag.currentSize = bagCount;
-      await userBag.save();
-
-      const location = userBag.canAddPet() ? 'bag' : 'storage';
-
-      // Tạo UserPet mới
-      const newUserPet = new UserPet({
-        user: req.user.id,
-        pet: petId,
-        level: level,
-        exp: exp,
-        hp: petTemplate.baseHp,
-        attack: petTemplate.baseAttack,
-        defense: petTemplate.baseDefense,
-        speed: petTemplate.baseSpeed,
-        accuracy: petTemplate.baseAccuracy,
-        evasion: petTemplate.baseEvasion,
-        criticalRate: petTemplate.baseCriticalRate,
-        location: location
-      });
-
-      await newUserPet.save();
-
-      // Populate thông tin pet
-      const userPetWithInfo = await UserPet.findById(newUserPet._id).populate({
-        path: 'pet',
-        populate: [
-          { path: 'normalSkill' },
-          { path: 'ultimateSkill' },
-          { path: 'passiveSkill' },
-          { path: 'evolutionPet' }
-        ]
-      });
-
-      // Cập nhật currentSize nếu pet được đặt vào túi
-      if (location === 'bag') {
-        userBag.currentSize += 1;
-        await userBag.save();
-      }
-
-      res.json({ 
-        success: true, 
-        message: `Đã nhận linh thú ${petTemplate.name} thành công`,
-        userPet: userPetWithInfo,
-        location: location,
-        bagInfo: {
-          current: userBag.currentSize,
-          max: userBag.maxSize,
-          available: userBag.getAvailableSlots()
-        }
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
-  };
+    
+    // Move pet
+    userPet.moveTo(newLocation);
+    await userPet.save();
+    
+    // Update bag
+    if (oldLocation === 'bag' && newLocation === 'storage') {
+      // Remove from bag
+      await UserBag.findOneAndUpdate(
+        { user: userId },
+        { $pull: { pets: userPetId } }
+      );
+    } else if (oldLocation === 'storage' && newLocation === 'bag') {
+      // Add to bag
+      await UserBag.findOneAndUpdate(
+        { user: userId },
+        { $push: { pets: userPetId } },
+        { upsert: true }
+      );
+    }
+    
+    res.json({
+      success: true,
+      message: `Di chuyển pet thành công từ ${oldLocation} sang ${newLocation}`,
+      data: {
+        userPetId: userPet._id,
+        oldLocation,
+        newLocation
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error moving user pet:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi di chuyển pet'
+    });
+  }
+};
 
+/**
+ * @route   POST /api/userpets/:userPetId/levelup
+ * @desc    Level up pet
+ * @access  Private
+ */
+const levelUpUserPet = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    // Check if can level up
+    const canLevelUp = await userPet.canLevelUp();
+    if (!canLevelUp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể level up pet'
+      });
+    }
+    
+    // Get user for gold check
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy user'
+      });
+    }
+    
+    // Get level up info
+    const levelUpInfo = await userPet.getLevelUpInfo();
+    if (!levelUpInfo) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể lấy thông tin level up'
+      });
+    }
+    
+    // Check gold cost (simplified)
+    const goldCost = levelUpInfo.cost.golds;
+    if (user.golds < goldCost) {
+      return res.status(400).json({
+        success: false,
+        message: `Không đủ gold để level up (cần ${goldCost}, có ${user.golds})`
+      });
+    }
+    
+    // Level up
+    const result = await userPet.levelUp();
+    
+    // Deduct gold
+    user.golds -= goldCost;
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: 'Level up thành công',
+      data: {
+        ...result,
+        goldSpent: goldCost,
+        remainingGolds: user.golds
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error leveling up user pet:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi level up pet'
+    });
+  }
+};
 
-} 
+/**
+ * @route   POST /api/userpets/:userPetId/evolve
+ * @desc    Evolve pet
+ * @access  Private
+ */
+const evolveUserPet = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    // Check if can evolve
+    const canEvolve = await userPet.canEvolve();
+    if (!canEvolve) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể evolve pet'
+      });
+    }
+    
+    // Evolve
+    await userPet.evolve();
+    await userPet.save();
+    
+    res.json({
+      success: true,
+      message: 'Evolve thành công',
+      data: {
+        userPetId: userPet._id,
+        newEvolutionStage: userPet.evolutionStage,
+        newStats: userPet.actualStats,
+        newCombatPower: userPet.actualCombatPower
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error evolving user pet:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi evolve pet'
+    });
+  }
+};
 
-module.exports = new UserPetController();
+/**
+ * @route   GET /api/userpets/:userPetId/skills
+ * @desc    Lấy thông tin skills của pet
+ * @access  Private
+ */
+const getUserPetSkills = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    // Get skills with levels
+    const skills = await userPet.getSkillsWithLevels();
+    
+    res.json({
+      success: true,
+      data: {
+        skills,
+        skillLevels: userPet.skillLevels
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error getting user pet skills:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy thông tin skills'
+    });
+  }
+};
+
+/**
+ * @route   POST /api/userpets/:userPetId/skills/:skillType/upgrade
+ * @desc    Nâng cấp skill của pet
+ * @access  Private
+ */
+const upgradeUserPetSkill = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId, skillType } = req.params;
+    
+    if (!['normal', 'ultimate', 'passive'].includes(skillType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Skill type không hợp lệ'
+      });
+    }
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    // Get user for inventory and gold check
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy user'
+      });
+    }
+    
+    // Get user inventory (simplified - you might need to implement this)
+    const userInventory = []; // TODO: Get from UserInventory model
+    
+    // Upgrade skill
+    const result = await userPet.upgradeSkill(skillType, userInventory, user.golds);
+    
+    // Deduct gold
+    user.golds -= result.goldsSpent;
+    await user.save();
+    
+    // Save user pet
+    await userPet.save();
+    
+    res.json({
+      success: true,
+      message: 'Nâng cấp skill thành công',
+      data: {
+        ...result,
+        remainingGolds: user.golds
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error upgrading user pet skill:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi server khi nâng cấp skill'
+    });
+  }
+};
+
+/**
+ * @route   GET /api/userpets/:userPetId/equipment
+ * @desc    Lấy thông tin equipment của pet
+ * @access  Private
+ */
+const getUserPetEquipment = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    // Get equipment
+    const equipment = await userPet.getEquipment();
+    const equipmentStats = await userPet.getEquipmentStats();
+    
+    res.json({
+      success: true,
+      data: {
+        equipment,
+        equipmentStats
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error getting user pet equipment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy thông tin equipment'
+    });
+  }
+};
+
+/**
+ * @route   POST /api/userpets/:userPetId/equipment/equip
+ * @desc    Trang bị item cho pet
+ * @access  Private
+ */
+const equipItemToUserPet = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    const { itemId, slot } = req.body;
+    
+    if (!itemId || !slot) {
+      return res.status(400).json({
+        success: false,
+        message: 'Item ID và slot là bắt buộc'
+      });
+    }
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    // Equip item
+    const result = await userPet.equipItem(itemId, slot);
+    
+    // Recalculate stats
+    await userPet.calculateActualStats();
+    await userPet.calculateCombatPower();
+    await userPet.save();
+    
+    res.json({
+      success: true,
+      message: 'Trang bị item thành công',
+      data: {
+        ...result,
+        newStats: userPet.actualStats,
+        newCombatPower: userPet.actualCombatPower
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error equipping item to user pet:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi server khi trang bị item'
+    });
+  }
+};
+
+/**
+ * @route   POST /api/userpets/:userPetId/equipment/unequip
+ * @desc    Tháo equipment khỏi pet
+ * @access  Private
+ */
+const unequipItemFromUserPet = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { userPetId } = req.params;
+    const { slot } = req.body;
+    
+    if (!slot) {
+      return res.status(400).json({
+        success: false,
+        message: 'Slot là bắt buộc'
+      });
+    }
+    
+    const userPet = await UserPet.findOne({ _id: userPetId, user: userId });
+    if (!userPet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy pet'
+      });
+    }
+    
+    // Unequip item
+    const result = await userPet.unequipItem(slot);
+    
+    // Recalculate stats
+    await userPet.calculateActualStats();
+    await userPet.calculateCombatPower();
+    await userPet.save();
+    
+    res.json({
+      success: true,
+      message: 'Tháo equipment thành công',
+      data: {
+        ...result,
+        newStats: userPet.actualStats,
+        newCombatPower: userPet.actualCombatPower
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error unequipping item from user pet:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi server khi tháo equipment'
+    });
+  }
+};
+
+module.exports = {
+  // Public APIs
+  getUserPets,
+  getUserPetDetail,
+  createUserPet,
+  moveUserPet,
+  levelUpUserPet,
+  evolveUserPet,
+  getUserPetSkills,
+  upgradeUserPetSkill,
+  getUserPetEquipment,
+  equipItemToUserPet,
+  unequipItemFromUserPet
+}; 

@@ -1,0 +1,60 @@
+{
+  "maps": [
+    {
+      "id": "fire_forest",
+      "name": "Rừng Lửa",
+      "stages": [
+        {
+          "stageId": "fire_forest_1",
+          "name": "Tầng 1",
+          "battles": [
+            {
+              "battleId": "fire_forest_1_1",
+              "enemies": [
+                { "petId": "slime", "level": 5 },
+                { "petId": "wolf", "level": 6 }
+              ],
+              "reward": {
+                "gold": 100,
+                "exp": 50,
+                "items": [{ "itemId": "evolve_stone", "quantity": 1 }]
+              }
+            },
+            {
+              "battleId": "fire_forest_1_2",
+              "enemies": [
+                { "petId": "fire_bird", "level": 7 }
+              ],
+              "reward": {
+                "gold": 120,
+                "exp": 60,
+                "items": [{ "itemId": "feather", "quantity": 2 }]
+              }
+            }
+          ]
+        },
+        {
+          "stageId": "fire_forest_boss",
+          "name": "Boss Sói Lửa",
+          "battles": [
+            {
+              "battleId": "fire_forest_boss_1",
+              "enemies": [
+                { "petId": "fire_wolf_boss", "level": 10, "skills": ["howl", "fire_bite"] }
+              ],
+              "reward": {
+                "gold": 500,
+                "exp": 200,
+                "items": [
+                  { "itemId": "fire_wolf_fragment", "quantity": 1, "chance": 0.2 },
+                  { "itemId": "evolve_stone", "quantity": 2 }
+                ],
+                "bonus": { "flawless": 100 }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+Phase 1:
+1. AUTHENTICATION & USER MANAGEMENT
+/api/auth
+POST   /api/auth/register          - Đăng ký tài khoản
+POST   /api/auth/login             - Đăng nhập
+POST   /api/auth/logout            - Đăng xuất
+POST   /api/auth/refresh           - Làm mới token
+POST   /api/auth/forgot-password   - Quên mật khẩu
+POST   /api/auth/reset-password    - Đặt lại mật khẩu
+POST   /api/auth/change-password   - Đổi mật khẩu
+GET    /api/auth/verify-email      - Xác thực email
+POST   /api/auth/resend-verification - Gửi lại email xác thực
+/api/users
+GET    /api/users/profile          - Lấy thông tin profile
+PUT    /api/users/profile          - Cập nhật profile
+PUT    /api/users/avatar           - Cập nhật avatar
+GET    /api/users/:userId          - Lấy thông tin user khác
+GET    /api/users/search           - Tìm kiếm user
+GET    /api/users/leaderboard      - Bảng xếp hạng
+GET    /api/users/statistics       - Thống kê user
+DELETE /api/users/account          - Xóa tài khoản
+
+// Admin routes
+GET    /api/users/admin/list       - Danh sách tất cả user (admin)
+PUT    /api/users/admin/:userId    - Cập nhật user (admin)
+DELETE /api/users/admin/:userId    - Xóa user (admin)
+POST   /api/users/admin/ban        - Cấm user (admin)
+POST   /api/users/admin/unban      - Bỏ cấm user (admin)
+
+Phase 2:
+2. PET SYSTEM
+/api/pets
+GET    /api/pets                   - Danh sách tất cả pet gốc
+GET    /api/pets/:petId            - Chi tiết pet gốc
+GET    /api/pets/search            - Tìm kiếm pet
+GET    /api/pets/elements          - Danh sách pet theo element
+GET    /api/pets/rarities          - Danh sách pet theo rarity
+GET    /api/pets/evolution-chain   - Chuỗi tiến hóa pet
+
+
+/api/user-pets
+GET    /api/user-pets              - Danh sách pet của user
+GET    /api/user-pets/:userPetId   - Chi tiết pet của user
+POST   /api/user-pets/catch        - Bắt pet mới
+PUT    /api/user-pets/:userPetId   - Cập nhật thông tin pet
+POST   /api/user-pets/:userPetId/level-up - Tăng level pet
+POST   /api/user-pets/:userPetId/evolve   - Tiến hóa pet
+POST   /api/user-pets/:userPetId/skill-upgrade - Nâng cấp skill
+GET    /api/user-pets/statistics   - Thống kê pet của user
+POST   /api/user-pets/calculate-stats - Tính lại stats pet
+
+Phase 3:
+3. INVENTORY & ITEM SYSTEM
+/api/items
+GET    /api/items                  - Danh sách tất cả item
+GET    /api/items/:itemId          - Chi tiết item
+GET    /api/items/search           - Tìm kiếm item
+GET    /api/items/types            - Danh sách item theo type
+GET    /api/items/rarities         - Danh sách item theo rarity
+/api/inventory
+GET    /api/inventory              - Danh sách vật phẩm trong inventory
+GET    /api/inventory/:itemId      - Chi tiết item trong inventory
+POST   /api/inventory/use          - Sử dụng item
+POST   /api/inventory/discard      - Vứt bỏ item
+POST   /api/inventory/sell         - Bán item
+GET    /api/inventory/statistics   - Thống kê inventory
+/api/user-pet-equipment
+GET    /api/user-pet-equipment/:userPetId - Xem trang bị của pet
+POST   /api/user-pet-equipment/equip      - Trang bị item cho pet
+POST   /api/user-pet-equipment/unequip    - Tháo trang bị
+POST   /api/user-pet-equipment/enhance    - Nâng cấp trang bị
+GET    /api/user-pet-equipment/statistics - Thống kê trang bị
+/api/user-bag
+GET    /api/user-bag               - Thông tin túi pet
+PUT    /api/user-bag/expand        - Mở rộng túi
+GET    /api/user-bag/pets          - Danh sách pet trong túi
+POST   /api/user-bag/move          - Di chuyển pet
+
+Phase 4:
+4. FORMATION SYSTEM
+/api/formations
+GET    /api/formations             - Danh sách formation của user
+GET    /api/formations/:formationId - Chi tiết formation
+POST   /api/formations             - Tạo formation mới
+PUT    /api/formations/:formationId - Cập nhật formation
+DELETE /api/formations/:formationId - Xóa formation
+POST   /api/formations/:formationId/activate - Kích hoạt formation
+POST   /api/formations/:formationId/add-pet   - Thêm pet vào formation
+POST   /api/formations/:formationId/remove-pet - Xóa pet khỏi formation
+POST   /api/formations/:formationId/move-pet  - Di chuyển pet trong formation
+GET    /api/formations/active      - Formation đang active
+GET    /api/formations/statistics  - Thống kê formation
+
+Phase 5:
+5. BATTLE SYSTEM
+/api/battles
+GET    /api/battles                - Lịch sử trận đấu
+GET    /api/battles/:battleId      - Chi tiết trận đấu
+POST   /api/battles/pve            - Tạo trận PvE
+POST   /api/battles/pvp            - Tạo trận PvP
+POST   /api/battles/boss           - Tạo trận Boss
+POST   /api/battles/:battleId/action - Thực hiện hành động
+GET    /api/battles/:battleId/state - Trạng thái trận đấu
+POST   /api/battles/:battleId/surrender - Đầu hàng
+GET    /api/battles/statistics     - Thống kê trận đấu
+/api/battle-logs
+GET    /api/battle-logs/:battleId  - Log chi tiết trận đấu
+GET    /api/battle-logs/:battleId/:turn - Log của turn cụ thể
+GET    /api/battle-logs/statistics - Thống kê battle log
+
+Phase 6:
+6. MAP, STAGE, PvE SYSTEM
+/api/maps
+GET    /api/maps                   - Danh sách tất cả map
+GET    /api/maps/:mapId            - Chi tiết map
+GET    /api/maps/:mapId/stages     - Danh sách stage trong map
+GET    /api/maps/available         - Map có thể chơi
+/api/stages
+GET    /api/stages                 - Danh sách tất cả stage
+GET    /api/stages/:stageId        - Chi tiết stage
+GET    /api/stages/:stageId/battles - Danh sách battle trong stage
+GET    /api/stages/available       - Stage có thể chơi
+/api/pve-battles
+GET    /api/pve-battles            - Danh sách PvE battle
+GET    /api/pve-battles/:battleId  - Chi tiết PvE battle
+POST   /api/pve-battles/:battleId/start - Bắt đầu trận PvE
+POST   /api/pve-battles/:battleId/complete - Hoàn thành trận PvE
+GET    /api/pve-battles/statistics - Thống kê PvE
+
+Phase 7:
+7. QUEST SYSTEM
+/api/quests
+GET    /api/quests                 - Danh sách nhiệm vụ của user
+GET    /api/quests/available       - Nhiệm vụ có thể làm
+GET    /api/quests/:questId        - Chi tiết nhiệm vụ
+POST   /api/quests/:questId/claim  - Nhận thưởng nhiệm vụ
+GET    /api/quests/statistics      - Thống kê nhiệm vụ
+GET    /api/quests/search          - Tìm kiếm nhiệm vụ
+POST   /api/quests/process-action  - Hook cho game events
+
+// Admin routes
+POST   /api/quests/admin/create    - Tạo nhiệm vụ mới (admin)
+PUT    /api/quests/admin/:questId  - Cập nhật nhiệm vụ (admin)
+DELETE /api/quests/admin/:questId  - Xóa nhiệm vụ (admin)
+POST   /api/quests/admin/reset-daily-weekly - Reset daily/weekly quests (admin)
+
+Phase 8:
+8. REWARD SYSTEM
+/api/rewards
+GET    /api/rewards/:rewardId      - Chi tiết phần thưởng
+POST   /api/rewards/:rewardId/claim - Nhận phần thưởng
+GET    /api/rewards/battle/:battleId - Phần thưởng từ trận đấu
+GET    /api/rewards/quest/:questId - Phần thưởng từ nhiệm vụ
+GET    /api/rewards/statistics     - Thống kê phần thưởng
+
+Phase 9:
+9. GAME DATA
+/api/gamedata
+GET    /api/gamedata/elements      - Danh sách elements
+GET    /api/gamedata/rarities      - Danh sách rarities
+GET    /api/gamedata/effects       - Danh sách effects
+GET    /api/gamedata/constants     - Game constants
+GET    /api/gamedata/effectiveness - Element effectiveness matrix
+

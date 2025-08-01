@@ -19,8 +19,7 @@ const effectSchema = new mongoose.Schema({
     value: { type: Number, default: 0 }, // Giá trị cơ bản
     percentage: { type: Number, default: 0 }, // Phần trăm (nếu có)
     duration: { type: Number, default: 0 }, // Thời gian hiệu lực (turns)
-    chance: { type: Number, default: 100 }, // Tỷ lệ kích hoạt (%)
-    maxStacks: { type: Number, default: 1 } // Số stack tối đa
+    chance: { type: Number, default: 100 } // Tỷ lệ kích hoạt (%)
   },
   
   // Target information
@@ -71,7 +70,6 @@ const effectSchema = new mongoose.Schema({
   
   // Status
   isActive: { type: Boolean, default: true },
-  isStackable: { type: Boolean, default: false }, // Có thể stack không
   
   // Metadata
   createdAt: { type: Date, default: Date.now },
@@ -347,7 +345,6 @@ effectSchema.pre('save', function(next) {
 });
 
 // Indexes
-effectSchema.index({ name: 1 });
 effectSchema.index({ type: 1 });
 effectSchema.index({ category: 1 });
 effectSchema.index({ isActive: 1 });

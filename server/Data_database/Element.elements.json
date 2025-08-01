@@ -1,0 +1,175 @@
+[{
+  "_id": {
+    "$oid": "6887b7bcf493efbf24b1d5ce"
+  },
+  "name": "fire",
+  "displayName": "Hỏa",
+  "icon": "/assets/element-icons/Pyro.svg",
+  "color": "#FF4444",
+  "effectivenessMatrix": {
+    "fire": 1,
+    "water": 1.5,
+    "ice": 2,
+    "rock": 1,
+    "thunder": 1.25,
+    "wind": 1,
+    "grass": 0.75
+  },
+  "createdAt": {
+    "$date": "2025-07-28T17:47:40.205Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-28T17:47:40.210Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6887b7bcf493efbf24b1d5d1"
+  },
+  "name": "water",
+  "displayName": "Thủy",
+  "icon": "/assets/element-icons/Hydro.svg",
+  "color": "#4444FF",
+  "effectivenessMatrix": {
+    "fire": 2,
+    "water": 1,
+    "ice": 1,
+    "rock": 1,
+    "thunder": 1.25,
+    "wind": 1,
+    "grass": 1.5
+  },
+  "createdAt": {
+    "$date": "2025-07-28T17:47:40.319Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-28T17:47:40.319Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6887b7bcf493efbf24b1d5d4"
+  },
+  "name": "ice",
+  "displayName": "Băng",
+  "icon": "/assets/element-icons/Cryo.svg",
+  "color": "#44FFFF",
+  "effectivenessMatrix": {
+    "fire": 1.5,
+    "water": 1,
+    "ice": 1,
+    "rock": 1,
+    "thunder": 1.5,
+    "wind": 1,
+    "grass": 0.75
+  },
+  "createdAt": {
+    "$date": "2025-07-28T17:47:40.418Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-28T17:47:40.418Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6887b7bcf493efbf24b1d5d7"
+  },
+  "name": "rock",
+  "displayName": "Nham",
+  "icon": "/assets/element-icons/Geo.svg",
+  "color": "#8B4513",
+  "effectivenessMatrix": {
+    "fire": 1,
+    "water": 1,
+    "ice": 1,
+    "rock": 1,
+    "thunder": 1,
+    "wind": 1.25,
+    "grass": 1.5
+  },
+  "createdAt": {
+    "$date": "2025-07-28T17:47:40.520Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-28T17:47:40.520Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6887b7bcf493efbf24b1d5da"
+  },
+  "name": "thunder",
+  "displayName": "Lôi",
+  "icon": "/assets/element-icons/Electro.svg",
+  "color": "#FFFF44",
+  "effectivenessMatrix": {
+    "fire": 1.25,
+    "water": 1.25,
+    "ice": 1,
+    "rock": 1.5,
+    "thunder": 1,
+    "wind": 1,
+    "grass": 0.5
+  },
+  "createdAt": {
+    "$date": "2025-07-28T17:47:40.623Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-28T17:47:40.624Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6887b7bcf493efbf24b1d5dd"
+  },
+  "name": "wind",
+  "displayName": "Phong",
+  "icon": "/assets/element-icons/Anemo.svg",
+  "color": "#87CEEB",
+  "effectivenessMatrix": {
+    "fire": 1,
+    "water": 1,
+    "ice": 1.25,
+    "rock": 0.75,
+    "thunder": 1,
+    "wind": 1,
+    "grass": 1.5
+  },
+  "createdAt": {
+    "$date": "2025-07-28T17:47:40.723Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-28T17:47:40.724Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6887b7bcf493efbf24b1d5e0"
+  },
+  "name": "grass",
+  "displayName": "Thảo",
+  "icon": "/assets/element-icons/Dendro.svg",
+  "color": "#44FF44",
+  "effectivenessMatrix": {
+    "fire": 0.75,
+    "water": 0.5,
+    "ice": 1,
+    "rock": 1,
+    "thunder": 2,
+    "wind": 0.75,
+    "grass": 1
+  },
+  "createdAt": {
+    "$date": "2025-07-28T17:47:40.825Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-28T17:47:40.825Z"
+  },
+  "__v": 0
+}]

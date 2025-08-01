@@ -33,7 +33,6 @@ raritySchema.pre('save', function(next) {
   next();
 });
 
-// Indexes
-raritySchema.index({ name: 1 });
+// No additional indexes needed - name is already unique in schema
 
 module.exports = mongoose.model('Rarity', raritySchema); 

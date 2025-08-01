@@ -1,0 +1,1048 @@
+[
+  {
+    "name": "poison",
+    "displayName": "Độc",
+    "type": "status",
+    "category": "poison",
+    "description": "Gây damage theo thời gian",
+    "icon": "☠️",
+    "parameters": {
+      "value": 15,
+      "percentage": 0,
+      "duration": 3,
+      "chance": 80
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [
+        "poison"
+      ],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "poison_effect",
+      "sound": "poison_sound",
+      "particles": "poison_particles",
+      "color": "#00ff00"
+    },
+    "isActive": true
+  },
+  {
+    "name": "burn",
+    "displayName": "Cháy",
+    "type": "status",
+    "category": "burn",
+    "description": "Gây damage theo thời gian và giảm defense",
+    "icon": "🔥",
+    "parameters": {
+      "value": 20,
+      "percentage": 0,
+      "duration": 3,
+      "chance": 75
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [
+        "fire"
+      ],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "burn_effect",
+      "sound": "burn_sound",
+      "particles": "fire_particles",
+      "color": "#ff4400"
+    },
+    "isActive": true
+  },
+  {
+    "name": "stun",
+    "displayName": "Choáng",
+    "type": "status",
+    "category": "stun",
+    "description": "Làm choáng mục tiêu trong 1 turn",
+    "icon": "💫",
+    "parameters": {
+      "value": 0,
+      "percentage": 0,
+      "duration": 1,
+      "chance": 60
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [
+        "thunder"
+      ],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "stun_effect",
+      "sound": "stun_sound",
+      "particles": "star_particles",
+      "color": "#ffff00"
+    },
+    "isActive": true
+  },
+  {
+    "name": "freeze",
+    "displayName": "Đóng Băng",
+    "type": "status",
+    "category": "freeze",
+    "description": "Đóng băng mục tiêu trong 1-2 turns",
+    "icon": "❄️",
+    "parameters": {
+      "value": 0,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 50
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [
+        "ice"
+      ],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "freeze_effect",
+      "sound": "freeze_sound",
+      "particles": "ice_particles",
+      "color": "#00ffff"
+    },
+    "isActive": true
+  },
+  {
+    "name": "paralyze",
+    "displayName": "Tê Liệt",
+    "type": "status",
+    "category": "paralyze",
+    "description": "Làm tê liệt mục tiêu, giảm speed và có thể miss turn",
+    "icon": "⚡",
+    "parameters": {
+      "value": 0,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 55
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [
+        "thunder"
+      ],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "paralyze_effect",
+      "sound": "paralyze_sound",
+      "particles": "electric_particles",
+      "color": "#ffff00"
+    },
+    "isActive": true
+  },
+  {
+    "name": "sleep",
+    "displayName": "Ngủ",
+    "type": "status",
+    "category": "sleep",
+    "description": "Làm mục tiêu ngủ trong 1-3 turns",
+    "icon": "😴",
+    "parameters": {
+      "value": 0,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 45
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [
+        "grass"
+      ],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "sleep_effect",
+      "sound": "sleep_sound",
+      "particles": "dream_particles",
+      "color": "#ff69b4"
+    },
+    "isActive": true
+  },
+  {
+    "name": "confusion",
+    "displayName": "Lẫn Lộn",
+    "type": "status",
+    "category": "confusion",
+    "description": "Làm mục tiêu lẫn lộn, có thể tấn công nhầm đồng đội",
+    "icon": "💫",
+    "parameters": {
+      "value": 0,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 40
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [
+        "psychic"
+      ],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "confusion_effect",
+      "sound": "confusion_sound",
+      "particles": "spiral_particles",
+      "color": "#ff00ff"
+    },
+    "isActive": true
+  },
+  {
+    "name": "attack_buff",
+    "displayName": "Tăng Tấn Công",
+    "type": "buff",
+    "category": "stat_boost",
+    "description": "Tăng attack cho mục tiêu",
+    "icon": "⚔️",
+    "parameters": {
+      "value": 25,
+      "percentage": 0,
+      "duration": 3,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 3
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "buff_effect",
+      "sound": "buff_sound",
+      "particles": "power_particles",
+      "color": "#ffaa00"
+    },
+    "isActive": true
+  },
+  {
+    "name": "defense_buff",
+    "displayName": "Tăng Phòng Thủ",
+    "type": "buff",
+    "category": "stat_boost",
+    "description": "Tăng defense cho mục tiêu",
+    "icon": "🛡️",
+    "parameters": {
+      "value": 20,
+      "percentage": 0,
+      "duration": 3,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 3
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "buff_effect",
+      "sound": "buff_sound",
+      "particles": "shield_particles",
+      "color": "#00aaff"
+    },
+    "isActive": true
+  },
+  {
+    "name": "speed_buff",
+    "displayName": "Tăng Tốc Độ",
+    "type": "buff",
+    "category": "stat_boost",
+    "description": "Tăng speed cho mục tiêu",
+    "icon": "⚡",
+    "parameters": {
+      "value": 30,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "buff_effect",
+      "sound": "buff_sound",
+      "particles": "speed_particles",
+      "color": "#ffff00"
+    },
+    "isActive": true
+  },
+  {
+    "name": "accuracy_buff",
+    "displayName": "Tăng Độ Chính Xác",
+    "type": "buff",
+    "category": "stat_boost",
+    "description": "Tăng accuracy cho mục tiêu",
+    "icon": "🎯",
+    "parameters": {
+      "value": 25,
+      "percentage": 0,
+      "duration": 3,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "buff_effect",
+      "sound": "buff_sound",
+      "particles": "target_particles",
+      "color": "#ff00ff"
+    },
+    "isActive": true
+  },
+  {
+    "name": "evasion_buff",
+    "displayName": "Tăng Né Tránh",
+    "type": "buff",
+    "category": "stat_boost",
+    "description": "Tăng evasion cho mục tiêu",
+    "icon": "👻",
+    "parameters": {
+      "value": 20,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "buff_effect",
+      "sound": "buff_sound",
+      "particles": "ghost_particles",
+      "color": "#808080"
+    },
+    "isActive": true
+  },
+  {
+    "name": "critical_buff",
+    "displayName": "Tăng Chí Mạng",
+    "type": "buff",
+    "category": "stat_boost",
+    "description": "Tăng critical rate cho mục tiêu",
+    "icon": "💥",
+    "parameters": {
+      "value": 15,
+      "percentage": 0,
+      "duration": 3,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "buff_effect",
+      "sound": "buff_sound",
+      "particles": "critical_particles",
+      "color": "#ff0000"
+    },
+    "isActive": true
+  },
+  {
+    "name": "attack_debuff",
+    "displayName": "Giảm Tấn Công",
+    "type": "debuff",
+    "category": "stat_reduction",
+    "description": "Giảm attack của mục tiêu",
+    "icon": "⚔️",
+    "parameters": {
+      "value": 20,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 85
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "debuff_effect",
+      "sound": "debuff_sound",
+      "particles": "weaken_particles",
+      "color": "#ff0000"
+    },
+    "isActive": true
+  },
+  {
+    "name": "defense_debuff",
+    "displayName": "Giảm Phòng Thủ",
+    "type": "debuff",
+    "category": "stat_reduction",
+    "description": "Giảm defense của mục tiêu",
+    "icon": "🛡️",
+    "parameters": {
+      "value": 25,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 80
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "debuff_effect",
+      "sound": "debuff_sound",
+      "particles": "break_particles",
+      "color": "#ff6600"
+    },
+    "isActive": true
+  },
+  {
+    "name": "speed_debuff",
+    "displayName": "Giảm Tốc Độ",
+    "type": "debuff",
+    "category": "stat_reduction",
+    "description": "Giảm speed của mục tiêu",
+    "icon": "⚡",
+    "parameters": {
+      "value": 25,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 75
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "debuff_effect",
+      "sound": "debuff_sound",
+      "particles": "slow_particles",
+      "color": "#808080"
+    },
+    "isActive": true
+  },
+  {
+    "name": "accuracy_debuff",
+    "displayName": "Giảm Độ Chính Xác",
+    "type": "debuff",
+    "category": "stat_reduction",
+    "description": "Giảm accuracy của mục tiêu",
+    "icon": "🎯",
+    "parameters": {
+      "value": 20,
+      "percentage": 0,
+      "duration": 2,
+      "chance": 80
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": true,
+      "stackType": "additive",
+      "maxStacks": 2
+    },
+    "resistance": {
+      "canResist": true,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "debuff_effect",
+      "sound": "debuff_sound",
+      "particles": "blind_particles",
+      "color": "#000000"
+    },
+    "isActive": true
+  },
+  {
+    "name": "heal",
+    "displayName": "Hồi Máu",
+    "type": "special",
+    "category": "heal",
+    "description": "Hồi phục HP cho mục tiêu",
+    "icon": "💚",
+    "parameters": {
+      "value": 0,
+      "percentage": 30,
+      "duration": 0,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "heal_effect",
+      "sound": "heal_sound",
+      "particles": "heal_particles",
+      "color": "#00ff00"
+    },
+    "isActive": true
+  },
+  {
+    "name": "drain",
+    "displayName": "Hút Máu",
+    "type": "special",
+    "category": "drain",
+    "description": "Hút một phần damage để hồi máu",
+    "icon": "🩸",
+    "parameters": {
+      "value": 0,
+      "percentage": 50,
+      "duration": 0,
+      "chance": 100
+    },
+    "targetType": "single",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "drain_effect",
+      "sound": "drain_sound",
+      "particles": "blood_particles",
+      "color": "#ff0000"
+    },
+    "isActive": true
+  },
+  {
+    "name": "energy_generation",
+    "displayName": "Tạo Năng Lượng",
+    "type": "special",
+    "category": "energy",
+    "description": "Tạo thêm năng lượng",
+    "icon": "⚡",
+    "parameters": {
+      "value": 25,
+      "percentage": 0,
+      "duration": 0,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "energy_effect",
+      "sound": "energy_sound",
+      "particles": "energy_particles",
+      "color": "#ffff00"
+    },
+    "isActive": true
+  },
+  {
+    "name": "reflect",
+    "displayName": "Phản Đòn",
+    "type": "special",
+    "category": "reflect",
+    "description": "Phản lại một phần damage nhận được",
+    "icon": "🪞",
+    "parameters": {
+      "value": 0,
+      "percentage": 30,
+      "duration": 2,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "reflect_effect",
+      "sound": "reflect_sound",
+      "particles": "mirror_particles",
+      "color": "#ffffff"
+    },
+    "isActive": true
+  },
+  {
+    "name": "counter",
+    "displayName": "Phản Công",
+    "type": "special",
+    "category": "counter",
+    "description": "Phản công khi bị tấn công",
+    "icon": "↩️",
+    "parameters": {
+      "value": 0,
+      "percentage": 50,
+      "duration": 1,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "counter_effect",
+      "sound": "counter_sound",
+      "particles": "counter_particles",
+      "color": "#ff6600"
+    },
+    "isActive": true
+  },
+  {
+    "name": "recoil",
+    "displayName": "Phản Lại",
+    "type": "special",
+    "category": "recoil",
+    "description": "Gây damage cho bản thân khi sử dụng skill",
+    "icon": "💥",
+    "parameters": {
+      "value": 0,
+      "percentage": 25,
+      "duration": 0,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "recoil_effect",
+      "sound": "recoil_sound",
+      "particles": "explosion_particles",
+      "color": "#ff0000"
+    },
+    "isActive": true
+  },
+  {
+    "name": "evade",
+    "displayName": "Né Tránh",
+    "type": "special",
+    "category": "evade",
+    "description": "Có xác suất né hoàn toàn đòn tấn công",
+    "icon": "🌀",
+    "parameters": {
+      "value": 0,
+      "percentage": 50,
+      "duration": 2,
+      "chance": 100
+    },
+    "targetType": "self",
+    "range": 1,
+    "conditions": {
+      "lowHp": 0,
+      "highHp": 0,
+      "lowEnergy": 0,
+      "highEnergy": 0,
+      "elementAdvantage": false,
+      "formationPosition": 0,
+      "comboCount": 0
+    },
+    "stacking": {
+      "canStack": false,
+      "stackType": "refresh",
+      "maxStacks": 1
+    },
+    "resistance": {
+      "canResist": false,
+      "resistanceStat": "statusResistance",
+      "immunityElements": [],
+      "immunityTypes": []
+    },
+    "visualEffects": {
+      "animation": "evade_effect",
+      "sound": "evade_sound",
+      "particles": "evade_particles",
+      "color": "#00ffff"
+    },
+    "isActive": true
+  }
+]

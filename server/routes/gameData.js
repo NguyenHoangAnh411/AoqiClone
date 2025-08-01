@@ -1,87 +1,107 @@
 const express = require('express');
 const router = express.Router();
-const gameDataController = require('../controllers/gameDataController');
-const { auth, isAdmin } = require('../utils/auth');
+const GameDataController = require('../controllers/gameDataController');
 
-// ==================== ELEMENT ROUTES ====================
+// ==================== ELEMENTS ====================
 
-// Tạo element mới (Admin only)
-router.post('/elements', gameDataController.createElement); // tạm thời bỏ authentication
+/**
+ * GET /api/gamedata/elements
+ * Lấy danh sách tất cả elements
+ */
+router.get('/elements', GameDataController.getElements);
 
-// Lấy tất cả elements (Public)
-router.get('/elements', gameDataController.getAllElements);
+/**
+ * GET /api/gamedata/elements/:elementId
+ * Lấy chi tiết element theo ID
+ */
+router.get('/elements/:elementId', GameDataController.getElementById);
 
-// Lấy element theo ID (Public)
-router.get('/elements/:id', gameDataController.getElementById);
+/**
+ * GET /api/gamedata/elements/:element1Id/effectiveness/:element2Id
+ * Lấy thông tin element effectiveness giữa 2 elements
+ */
+router.get('/elements/:element1Id/effectiveness/:element2Id', GameDataController.getElementEffectivenessBetween);
 
-// Cập nhật element (Admin only)
-router.put('/elements/:id', auth, isAdmin, gameDataController.updateElement);
+// ==================== RARITIES ====================
 
-// Xóa element (Admin only)
-router.delete('/elements/:id', auth, isAdmin, gameDataController.deleteElement);
+/**
+ * GET /api/gamedata/rarities
+ * Lấy danh sách tất cả rarities
+ */
+router.get('/rarities', GameDataController.getRarities);
 
-// Tạo nhiều elements cùng lúc (Admin only)
-router.post('/elements/bulk', gameDataController.createMultipleElements); // tạm thời bỏ authentication
+/**
+ * GET /api/gamedata/rarities/:rarityId
+ * Lấy chi tiết rarity theo ID
+ */
+router.get('/rarities/:rarityId', GameDataController.getRarityById);
 
-// ==================== RARITY ROUTES ====================
+// ==================== SKILLS ====================
 
-// Tạo rarity mới (Admin only)
-router.post('/rarities', auth, isAdmin, gameDataController.createRarity);
+/**
+ * GET /api/gamedata/skills
+ * Lấy danh sách skills
+ */
+router.get('/skills', GameDataController.getSkills);
 
-// Lấy tất cả rarities (Public)
-router.get('/rarities', gameDataController.getAllRarities);
+/**
+ * GET /api/gamedata/skills/:skillId
+ * Lấy chi tiết skill theo ID
+ */
+router.get('/skills/:skillId', GameDataController.getSkillById);
 
-// Lấy rarity theo ID (Public)
-router.get('/rarities/:id', gameDataController.getRarityById);
+/**
+ * GET /api/gamedata/skill-types
+ * Lấy danh sách skill types
+ */
+router.get('/skill-types', GameDataController.getSkillTypes);
 
-// Cập nhật rarity (Admin only)
-router.put('/rarities/:id', gameDataController.updateRarity); // tạm thời bỏ authentication
+// ==================== EFFECTS ====================
 
-// Xóa rarity (Admin only)
-router.delete('/rarities/:id', gameDataController.deleteRarity); // tạm thời bỏ authentication
+/**
+ * GET /api/gamedata/effects
+ * Lấy danh sách effects
+ */
+router.get('/effects', GameDataController.getEffects);
 
-// Tạo nhiều rarities cùng lúc (Admin only)
-router.post('/rarities/bulk', gameDataController.createMultipleRarities); // tạm thời bỏ authentication
+/**
+ * GET /api/gamedata/effects/:effectId
+ * Lấy chi tiết effect theo ID
+ */
+router.get('/effects/:effectId', GameDataController.getEffectById);
 
-// Import rarities từ JSON (Admin only)
-router.post('/rarities/import', gameDataController.importRaritiesFromJson); // tạm thời bỏ authentication
+/**
+ * GET /api/gamedata/effect-types
+ * Lấy danh sách effect types
+ */
+router.get('/effect-types', GameDataController.getEffectTypes);
 
-// ==================== EFFECT ROUTES ====================
+/**
+ * GET /api/gamedata/effect-categories
+ * Lấy danh sách effect categories
+ */
+router.get('/effect-categories', GameDataController.getEffectCategories);
 
-// Tạo effect mới (Admin only)
-router.post('/effects', gameDataController.createEffect); // tạm thời bỏ authentication
+// ==================== CONSTANTS ====================
 
-// Lấy tất cả effects (Public)
-router.get('/effects', gameDataController.getAllEffects);
+/**
+ * GET /api/gamedata/constants
+ * Lấy tất cả game constants
+ */
+router.get('/constants', GameDataController.getGameConstants);
 
-// Lấy effect theo ID (Public)
-router.get('/effects/:id', gameDataController.getEffectById);
+/**
+ * GET /api/gamedata/element-effectiveness
+ * Lấy element effectiveness matrix
+ */
+router.get('/element-effectiveness', GameDataController.getElementEffectiveness);
 
-// Cập nhật effect (Admin only)
-router.put('/effects/:id', gameDataController.updateEffect); // tạm thời bỏ authentication
+// ==================== ALL GAME DATA ====================
 
-// Xóa effect (Admin only)
-router.delete('/effects/:id', gameDataController.deleteEffect); // tạm thời bỏ authentication
-
-// Lấy effects theo type (Public)
-router.get('/effects/type/:type', gameDataController.getEffectsByType);
-
-// Lấy effects theo category (Public)
-router.get('/effects/category/:category', gameDataController.getEffectsByCategory);
-
-// Tìm kiếm effects (Public)
-router.get('/effects/search', gameDataController.searchEffects);
-
-// Lấy thống kê effects (Public)
-router.get('/effects/stats', gameDataController.getEffectStats);
-
-// Tạo nhiều effects cùng lúc (Admin only)
-router.post('/effects/bulk', gameDataController.createMultipleEffects); // tạm thời bỏ authentication
-
-// Cập nhật nhiều effects cùng lúc (Admin only)
-router.put('/effects/bulk', gameDataController.updateMultipleEffects); // tạm thời bỏ authentication
-
-// Import effects từ JSON (Admin only)
-router.post('/effects/import', gameDataController.importEffectsFromJson); // tạm thời bỏ authentication
+/**
+ * GET /api/gamedata/all
+ * Lấy tất cả dữ liệu game cơ bản (elements, rarities, constants)
+ */
+router.get('/all', GameDataController.getAllGameData);
 
 module.exports = router; 

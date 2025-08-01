@@ -83,7 +83,6 @@ elementSchema.pre('save', function(next) {
   next();
 });
 
-// Indexes
-elementSchema.index({ name: 1 });
+// No additional indexes needed - name is already unique in schema
 
 module.exports = mongoose.model('Element', elementSchema); 

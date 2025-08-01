@@ -1,10 +1,4 @@
 const mongoose = require('mongoose');
-
-/**
- * UserPet Model - Liên kết User với Pet
- * Mỗi UserPet đại diện cho một pet cụ thể mà user sở hữu
- * Có level, exp, stats riêng cho từng pet
- */
 const userPetSchema = new mongoose.Schema({
   // References
   user: { 
@@ -32,7 +26,7 @@ const userPetSchema = new mongoose.Schema({
   // Location trong game
   location: { 
     type: String, 
-    enum: ['bag', 'storage'], 
+    enum: ['bag', 'storage', 'formation'], 
     default: 'storage' 
   },
   
@@ -47,8 +41,7 @@ const userPetSchema = new mongoose.Schema({
     type: Boolean, 
     default: false 
   },
-  
-  // Calculated stats (tính toán động)
+
   actualStats: {
     hp: { type: Number, default: 0 },
     attack: { type: Number, default: 0 },
@@ -72,13 +65,6 @@ const userPetSchema = new mongoose.Schema({
     default: 0 
   },
   
-  // Equipment slots (cho tương lai)
-  equipment: {
-    weapon: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' },
-    armor: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' },
-    accessory: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' }
-  },
-  
   // Skill levels của pet này
   skillLevels: {
     normalSkill: { type: Number, default: 1, min: 1 },
@@ -100,7 +86,7 @@ const userPetSchema = new mongoose.Schema({
 // ==================== METHODS ====================
 
 /**
- * Tính toán stats thực tế với Stat Growth System
+ * Tính toán stats thực tế với Stat Growth System và Equipment
  */
 userPetSchema.methods.calculateActualStats = async function() {
   await this.populate('pet');
@@ -119,6 +105,22 @@ userPetSchema.methods.calculateActualStats = async function() {
     evasion: Math.floor(this.pet.baseEvasion * this.level * (this.pet.statGrowth?.evasion || 1.0)),
     criticalRate: Math.floor(this.pet.baseCriticalRate * this.level * (this.pet.statGrowth?.criticalRate || 1.0))
   };
+  
+  // Cộng thêm stats từ equipment
+  try {
+    const UserPetEquipment = require('./UserPetEquipment');
+    const equipmentStats = await UserPetEquipment.getPetTotalEquipmentStats(this._id);
+    
+    this.actualStats.hp += equipmentStats.hp;
+    this.actualStats.attack += equipmentStats.attack;
+    this.actualStats.defense += equipmentStats.defense;
+    this.actualStats.speed += equipmentStats.speed;
+    this.actualStats.accuracy += equipmentStats.accuracy;
+    this.actualStats.evasion += equipmentStats.evasion;
+    this.actualStats.criticalRate += equipmentStats.criticalRate;
+  } catch (error) {
+    console.log('Không thể load equipment stats:', error.message);
+  }
   
   return this.actualStats;
 };
@@ -174,12 +176,19 @@ userPetSchema.methods.canLevelUp = async function() {
   await this.populate('pet');
   if (!this.pet) return false;
   
+  console.log(`canLevelUp: current level=${this.level}, pet levelCap=${this.pet.levelCap}, current exp=${this.exp}`);
+  
   // Check level cap
-  if (this.level >= this.pet.levelCap) return false;
+  if (this.level >= this.pet.levelCap) {
+    console.log('Cannot level up: reached level cap');
+    return false;
+  }
   
   // Calculate exp needed for next level
-  const expNeeded = this.calculateExpForLevel(this.level + 1);
-  return this.exp >= expNeeded;
+  const expNeeded = await this.calculateExpForLevel(this.level + 1);
+  const canLevelUp = this.exp >= expNeeded;
+  console.log(`canLevelUp: expNeeded=${expNeeded}, canLevelUp=${canLevelUp}`);
+  return canLevelUp;
 };
 
 /**
@@ -194,7 +203,9 @@ userPetSchema.methods.calculateExpForLevel = async function(targetLevel) {
   const baseExp = targetLevel * 100; // Base exp formula (giảm từ 500 xuống 100)
   const expMultiplier = this.pet.rarity?.expMultiplier || 1.0; // Rarity chỉ ảnh hưởng exp requirements
   
-  return Math.floor(baseExp * expMultiplier);
+  const result = Math.floor(baseExp * expMultiplier);
+  console.log(`calculateExpForLevel: targetLevel=${targetLevel}, baseExp=${baseExp}, expMultiplier=${expMultiplier}, result=${result}`);
+  return result;
 };
 
 /**
@@ -274,6 +285,115 @@ userPetSchema.methods.evolve = async function() {
 };
 
 /**
+ * Lấy thông tin evolution
+ */
+userPetSchema.methods.getEvolutionInfo = async function() {
+  await this.populate('pet');
+  if (!this.pet) return null;
+  
+  // Check if evolution chain exists
+  if (!this.pet.evolutionChain || !Array.isArray(this.pet.evolutionChain)) {
+    return null;
+  }
+  
+  const nextEvolution = this.pet.evolutionChain.find(evo => evo.stage === this.evolutionStage + 1);
+  if (!nextEvolution) {
+    return {
+      currentStage: this.evolutionStage,
+      maxStage: this.evolutionStage,
+      requirements: null,
+      newPet: null,
+      canEvolve: false
+    };
+  }
+  
+  return {
+    currentStage: this.evolutionStage,
+    maxStage: Math.max(...this.pet.evolutionChain.map(evo => evo.stage)),
+    requirements: nextEvolution.requirements,
+    newPet: nextEvolution.petId,
+    canEvolve: await this.canEvolve()
+  };
+};
+
+/**
+ * Lấy thông tin level up
+ */
+userPetSchema.methods.getLevelUpInfo = async function() {
+  await this.populate('pet');
+  if (!this.pet) return null;
+  
+  // Check if can level up
+  if (!(await this.canLevelUp())) {
+    return null;
+  }
+  
+  const nextLevel = this.level + 1;
+  const expNeeded = await this.calculateExpForLevel(nextLevel);
+  
+  // Calculate new stats
+  const newStats = {
+    hp: Math.floor(this.pet.baseHp * nextLevel * (this.pet.statGrowth?.hp || 1.0)),
+    attack: Math.floor(this.pet.baseAttack * nextLevel * (this.pet.statGrowth?.attack || 1.0)),
+    defense: Math.floor(this.pet.baseDefense * nextLevel * (this.pet.statGrowth?.defense || 1.0)),
+    speed: Math.floor(this.pet.baseSpeed * nextLevel * (this.pet.statGrowth?.speed || 1.0)),
+    accuracy: Math.floor(this.pet.baseAccuracy * nextLevel * (this.pet.statGrowth?.accuracy || 1.0)),
+    evasion: Math.floor(this.pet.baseEvasion * nextLevel * (this.pet.statGrowth?.evasion || 1.0)),
+    criticalRate: Math.floor(this.pet.baseCriticalRate * nextLevel * (this.pet.statGrowth?.criticalRate || 1.0))
+  };
+  
+  return {
+    currentLevel: this.level,
+    currentExp: this.exp,
+    requiredExp: expNeeded,
+    cost: {
+      golds: this.level * 1000, // Simple gold cost formula
+      materials: []
+    },
+    newStats: newStats
+  };
+};
+
+/**
+ * Level up pet
+ */
+userPetSchema.methods.levelUp = async function(userInventory = []) {
+  const levelUpInfo = await this.getLevelUpInfo();
+  
+  if (!levelUpInfo) {
+    throw new Error('Cannot level up pet');
+  }
+  
+  console.log(`levelUp: starting level up from level ${this.level} to ${this.level + 1}`);
+  
+  // Check if user has enough golds (simplified check)
+  // In real implementation, you would check user's golds here
+  
+  // Level up
+  this.level += 1;
+  this.exp -= levelUpInfo.requiredExp;
+  
+  console.log(`levelUp: new level=${this.level}, remaining exp=${this.exp}`);
+  
+  // Recalculate stats
+  await this.calculateActualStats();
+  await this.calculateCombatPower();
+  
+  // Update evolve status
+  await this.updateEvolveStatus();
+  
+  console.log(`levelUp: completed successfully`);
+  
+  return {
+    success: true,
+    oldLevel: levelUpInfo.currentLevel,
+    newLevel: this.level,
+    newStats: this.actualStats,
+    newCombatPower: this.actualCombatPower
+  };
+};
+
+/**
  * Lấy thông tin đầy đủ của pet
  */
 userPetSchema.methods.getFullInfo = async function() {
@@ -284,6 +404,15 @@ userPetSchema.methods.getFullInfo = async function() {
   
   // Lấy skills với levels
   const skillsWithLevels = await this.getSkillsWithLevels();
+  
+  // Lấy equipment info
+  let equipment = null;
+  try {
+    const UserPetEquipment = require('./UserPetEquipment');
+    equipment = await UserPetEquipment.getPetEquipment(this._id);
+  } catch (error) {
+    console.log('Không thể load equipment:', error.message);
+  }
   
   return {
     _id: this._id,
@@ -298,7 +427,7 @@ userPetSchema.methods.getFullInfo = async function() {
     actualCombatPower: this.actualCombatPower,
     totalDamageDealt: this.totalDamageDealt,
     totalDamageTaken: this.totalDamageTaken,
-    equipment: this.equipment,
+    equipment: equipment,
     skills: skillsWithLevels,
     skillLevels: this.skillLevels,
     createdAt: this.createdAt,
@@ -402,9 +531,33 @@ userPetSchema.methods.getSkillUpgradeInfo = async function(skillType) {
   await this.pet.populate(skillKey);
   
   const currentLevel = this.getSkillLevel(skillType);
-  const nextLevelInfo = skillTemplate.getNextLevelInfo(currentLevel);
+  console.log('Current skill level:', currentLevel);
+  console.log('Skill template:', skillTemplate);
   
-  return nextLevelInfo;
+  // Kiểm tra xem skill template có method getNextLevelInfo không
+  if (typeof skillTemplate.getNextLevelInfo !== 'function') {
+    console.error('Skill template does not have getNextLevelInfo method:', skillTemplate);
+    return null;
+  }
+  
+  const nextLevelInfo = skillTemplate.getNextLevelInfo(currentLevel);
+  console.log('Next level info:', nextLevelInfo);
+  
+  if (!nextLevelInfo) return null;
+  
+  // Sử dụng gold cost từ Skill model thay vì tính riêng
+  const goldsCost = nextLevelInfo.upgradeRequirements.gold;
+  
+  return {
+    ...nextLevelInfo,
+    goldsCost: goldsCost,
+    requirements: nextLevelInfo.upgradeRequirements,
+    totalCost: {
+      materials: nextLevelInfo.upgradeRequirements.materials,
+      golds: goldsCost,
+      petLevel: nextLevelInfo.upgradeRequirements.petLevel
+    }
+  };
 };
 
 /**
@@ -429,7 +582,7 @@ userPetSchema.methods.calculateSkillDamage = async function(skillType, targetEle
 /**
  * Nâng cấp skill
  */
-userPetSchema.methods.upgradeSkill = async function(skillType, userInventory, userGold) {
+userPetSchema.methods.upgradeSkill = async function(skillType, userInventory, userGolds) {
   const upgradeInfo = await this.getSkillUpgradeInfo(skillType);
   
   if (!upgradeInfo) {
@@ -444,16 +597,24 @@ userPetSchema.methods.upgradeSkill = async function(skillType, userInventory, us
     throw new Error(`Pet cần level ${requirements.petLevel} (hiện tại: ${this.level})`);
   }
   
-  // Kiểm tra gold
-  if (userGold < requirements.gold) {
-    throw new Error(`Cần ${requirements.gold} gold (hiện tại: ${userGold})`);
+  // Sử dụng gold cost từ Skill model
+  const goldsCost = upgradeInfo.goldsCost;
+  
+  // Kiểm tra golds
+  if (userGolds < goldsCost) {
+    throw new Error(`Cần ${goldsCost} golds để nâng cấp skill (hiện tại: ${userGolds})`);
   }
   
-  // Kiểm tra materials
+  // Kiểm tra materials - cải thiện validation
   for (const material of requirements.materials) {
-    const userItem = userInventory.find(item => item.itemId.toString() === material.itemId.toString());
+    // Tìm item trong user inventory
+    const userItem = userInventory.find(item => {
+      // So sánh ObjectId
+      return item.itemId && item.itemId.toString() === material.itemId.toString();
+    });
+    
     if (!userItem || userItem.quantity < material.quantity) {
-      throw new Error(`Thiếu ${material.quantity} ${material.itemId}`);
+      throw new Error(`Thiếu ${material.quantity} items cho skill upgrade`);
     }
   }
   
@@ -468,8 +629,23 @@ userPetSchema.methods.upgradeSkill = async function(skillType, userInventory, us
     newLevel: newLevel,
     newScaling: upgradeInfo.nextScaling,
     materialsUsed: requirements.materials,
-    goldSpent: requirements.gold
+    goldsSpent: goldsCost,
+    requirements: requirements
   };
+};
+
+/**
+ * Tính chi phí golds để nâng cấp skill (DEPRECATED - Sử dụng từ Skill model)
+ * @deprecated Sử dụng skillTemplate.calculateSkillUpgradeGoldsCost() thay thế
+ */
+userPetSchema.methods.calculateSkillUpgradeGoldsCost = function(skillType, targetLevel) {
+  console.warn('DEPRECATED: calculateSkillUpgradeGoldsCost in UserPet. Use Skill model instead.');
+  
+  // Fallback calculation - nên sử dụng từ Skill model
+  const baseCost = 5000;
+  const levelMultiplier = 1.85;
+  const multiplier = Math.pow(levelMultiplier, targetLevel - 2);
+  return Math.floor(baseCost * multiplier);
 };
 
 /**
@@ -549,6 +725,74 @@ userPetSchema.methods.validateData = async function() {
   };
 };
 
+// ==================== EQUIPMENT METHODS ====================
+
+/**
+ * Lấy tất cả equipment của pet
+ */
+userPetSchema.methods.getEquipment = async function() {
+  try {
+    const UserPetEquipment = require('./UserPetEquipment');
+    return await UserPetEquipment.getPetEquipment(this._id);
+  } catch (error) {
+    console.log('Không thể load equipment:', error.message);
+    return [];
+  }
+};
+
+/**
+ * Lấy equipment theo slot
+ */
+userPetSchema.methods.getEquipmentBySlot = async function(slot) {
+  try {
+    const UserPetEquipment = require('./UserPetEquipment');
+    return await UserPetEquipment.getEquipmentBySlot(this._id, slot);
+  } catch (error) {
+    console.log('Không thể load equipment by slot:', error.message);
+    return null;
+  }
+};
+
+/**
+ * Trang bị item cho pet
+ */
+userPetSchema.methods.equipItem = async function(itemId, slot) {
+  try {
+    const UserPetEquipment = require('./UserPetEquipment');
+    return await UserPetEquipment.equipItem(this._id, itemId, slot, this.level);
+  } catch (error) {
+    throw new Error(`Không thể trang bị item: ${error.message}`);
+  }
+};
+
+/**
+ * Tháo equipment khỏi pet
+ */
+userPetSchema.methods.unequipItem = async function(slot) {
+  try {
+    const UserPetEquipment = require('./UserPetEquipment');
+    return await UserPetEquipment.unequipItem(this._id, slot);
+  } catch (error) {
+    throw new Error(`Không thể tháo equipment: ${error.message}`);
+  }
+};
+
+/**
+ * Lấy tổng stats từ equipment
+ */
+userPetSchema.methods.getEquipmentStats = async function() {
+  try {
+    const UserPetEquipment = require('./UserPetEquipment');
+    return await UserPetEquipment.getPetTotalEquipmentStats(this._id);
+  } catch (error) {
+    console.log('Không thể load equipment stats:', error.message);
+    return {
+      hp: 0, attack: 0, defense: 0, speed: 0,
+      accuracy: 0, evasion: 0, criticalRate: 0, criticalDamage: 0
+    };
+  }
+};
+
 // ==================== MIDDLEWARE ====================
 
 /**
@@ -557,24 +801,8 @@ userPetSchema.methods.validateData = async function() {
 userPetSchema.pre('save', async function(next) {
   this.updatedAt = new Date();
   
-  try {
-    // Calculate stats và combat power nếu chưa có hoặc level thay đổi
-    const needsRecalculation = !this.actualStats.hp || 
-                              !this.actualCombatPower || 
-                              this.isModified('level') ||
-                              this.isModified('evolutionStage');
-    
-    if (needsRecalculation) {
-      await this.calculateActualStats();
-      await this.calculateCombatPower();
-    }
-    
-    // Update evolve status
-    await this.updateEvolveStatus();
-  } catch (error) {
-    console.error('Error in UserPet pre-save middleware:', error);
-    // Continue with save even if calculation fails
-  }
+  // Tạm thời disable để tránh infinite loop
+  console.log('Pre-save middleware: updating timestamp only');
   
   next();
 });

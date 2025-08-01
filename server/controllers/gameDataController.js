@@ -1,794 +1,576 @@
 const Element = require('../models/Element');
 const Rarity = require('../models/Rarity');
-const Effect = require('../models/Effect');
-const Pet = require('../models/Pet');
 const Skill = require('../models/Skill');
-const { sendErrorResponse, sendSuccessResponse } = require('../utils/controllerUtils');
+const Effect = require('../models/Effect');
+const { 
+  BASE_ELEMENT_EFFECTIVENESS, 
+  BASE_RARITY_MULTIPLIERS,
+  getElementEffectiveness,
+  getRarityMultiplier,
+  LEVEL_CONSTANTS,
+  PET_CONSTANTS,
+  BATTLE_CONSTANTS,
+  FORMATION_CONSTANTS,
+  SKILL_CONSTANTS,
+  ITEM_CONSTANTS,
+  INVENTORY_CONSTANTS,
+  EQUIPMENT_CONSTANTS,
+  BAG_CONSTANTS,
+  CURRENCY_CONSTANTS
+} = require('../utils/gameConstants');
 
-// ==================== ELEMENT APIs ====================
+class GameDataController {
+  /**
+   * Lấy danh sách tất cả elements
+   */
+  static async getElements(req, res) {
+    try {
+      const elements = await Element.find({}).sort({ name: 1 });
 
-// Tạo element mới
-exports.createElement = async (req, res) => {
-  try {
-    const {
-      name,
-      displayName,
-      icon,
-      color,
-      description,
-      characteristics,
-      effectivenessMatrix
-    } = req.body;
-
-    // Kiểm tra element đã tồn tại chưa
-    const existingElement = await Element.findOne({ name });
-    if (existingElement) {
-      return sendErrorResponse(res, 400, 'Element đã tồn tại');
+      res.json({
+        success: true,
+        data: elements,
+        message: 'Lấy danh sách elements thành công'
+      });
+    } catch (error) {
+      console.error('Get elements error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách elements',
+        error: error.message
+      });
     }
-
-    // Tạo element mới
-    const element = new Element({
-      name,
-      displayName,
-      icon,
-      color,
-      description,
-      characteristics,
-      effectivenessMatrix
-    });
-
-    await element.save();
-
-    sendSuccessResponse(res, 201, { element }, 'Tạo element thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi tạo element', error);
   }
-};
 
-// Lấy tất cả elements
-exports.getAllElements = async (req, res) => {
-  try {
-    const elements = await Element.find({ isActive: true }).sort({ name: 1 });
-    sendSuccessResponse(res, 200, { elements }, 'Lấy danh sách elements thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy danh sách elements', error);
-  }
-};
-
-// Lấy element theo ID
-exports.getElementById = async (req, res) => {
-  try {
-    const element = await Element.findById(req.params.id);
-    if (!element) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy element');
-    }
-    sendSuccessResponse(res, 200, { element }, 'Lấy element thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy element', error);
-  }
-};
-
-// Cập nhật element
-exports.updateElement = async (req, res) => {
-  try {
-    const element = await Element.findById(req.params.id);
-    if (!element) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy element');
-    }
-
-    // Cập nhật các trường
-    Object.keys(req.body).forEach(key => {
-      if (key !== '_id' && key !== '__v') {
-        element[key] = req.body[key];
-      }
-    });
-
-    await element.save();
-    sendSuccessResponse(res, 200, { element }, 'Cập nhật element thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi cập nhật element', error);
-  }
-};
-
-// Xóa element (soft delete)
-exports.deleteElement = async (req, res) => {
-  try {
-    const element = await Element.findById(req.params.id);
-    if (!element) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy element');
-    }
-
-    element.isActive = false;
-    await element.save();
-
-    sendSuccessResponse(res, 200, {}, 'Xóa element thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi xóa element', error);
-  }
-};
-
-// ==================== RARITY APIs ====================
-
-// Tạo rarity mới
-exports.createRarity = async (req, res) => {
-  try {
-    const {
-      name,
-      displayName,
-      icon,
-      color,
-      dropRate,
-      expMultiplier
-    } = req.body;
-
-    // Kiểm tra rarity đã tồn tại chưa
-    const existingRarity = await Rarity.findOne({ name });
-    if (existingRarity) {
-      return sendErrorResponse(res, 400, 'Rarity đã tồn tại');
-    }
-
-    // Tạo rarity mới
-    const rarity = new Rarity({
-      name,
-      displayName,
-      icon,
-      color,
-      dropRate,
-      expMultiplier
-    });
-
-    await rarity.save();
-
-    sendSuccessResponse(res, 201, { rarity }, 'Tạo rarity thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi tạo rarity', error);
-  }
-};
-
-// Lấy tất cả rarities
-exports.getAllRarities = async (req, res) => {
-  try {
-    const rarities = await Rarity.find({ isActive: true }).sort({ name: 1 });
-    sendSuccessResponse(res, 200, { rarities }, 'Lấy danh sách rarities thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy danh sách rarities', error);
-  }
-};
-
-// Lấy rarity theo ID
-exports.getRarityById = async (req, res) => {
-  try {
-    const rarity = await Rarity.findById(req.params.id);
-    if (!rarity) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy rarity');
-    }
-    sendSuccessResponse(res, 200, { rarity }, 'Lấy rarity thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy rarity', error);
-  }
-};
-
-// Cập nhật rarity
-exports.updateRarity = async (req, res) => {
-  try {
-    const rarity = await Rarity.findById(req.params.id);
-    if (!rarity) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy rarity');
-    }
-
-    // Cập nhật các trường
-    Object.keys(req.body).forEach(key => {
-      if (key !== '_id' && key !== '__v') {
-        rarity[key] = req.body[key];
-      }
-    });
-
-    await rarity.save();
-    sendSuccessResponse(res, 200, { rarity }, 'Cập nhật rarity thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi cập nhật rarity', error);
-  }
-};
-
-// Xóa rarity (soft delete)
-exports.deleteRarity = async (req, res) => {
-  try {
-    const rarity = await Rarity.findById(req.params.id);
-    if (!rarity) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy rarity');
-    }
-
-    // Check if rarity is being used by any pets
-    const petsUsingRarity = await Pet.find({ rarity: rarity._id });
-
-    if (petsUsingRarity.length > 0) {
-      return sendErrorResponse(res, 400, 
-        `Không thể xóa rarity vì đang được sử dụng bởi ${petsUsingRarity.length} pets`
-      );
-    }
-
-    rarity.isActive = false;
-    await rarity.save();
-
-    sendSuccessResponse(res, 200, {}, 'Xóa rarity thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi xóa rarity', error);
-  }
-};
-
-// ==================== EFFECT APIs ====================
-
-// Tạo effect mới
-exports.createEffect = async (req, res) => {
-  try {
-    const {
-      name,
-      displayName,
-      type,
-      category,
-      description,
-      icon,
-      parameters,
-      targetType,
-      range,
-      conditions,
-      stacking,
-      resistance,
-      visualEffects,
-      isActive,
-      isStackable
-    } = req.body;
-
-    // Kiểm tra effect đã tồn tại chưa
-    const existingEffect = await Effect.findOne({ name });
-    if (existingEffect) {
-      return sendErrorResponse(res, 400, 'Effect đã tồn tại');
-    }
-
-    // Tạo effect mới
-    const effect = new Effect({
-      name,
-      displayName,
-      type,
-      category,
-      description,
-      icon,
-      parameters,
-      targetType,
-      range,
-      conditions,
-      stacking,
-      resistance,
-      visualEffects,
-      isActive,
-      isStackable
-    });
-
-    await effect.save();
-
-    sendSuccessResponse(res, 201, { effect }, 'Tạo effect thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi tạo effect', error);
-  }
-};
-
-// Lấy tất cả effects
-exports.getAllEffects = async (req, res) => {
-  try {
-    const { type, category, isActive = true } = req.query;
-    
-    // Build filter
-    const filter = {};
-    if (isActive !== undefined) filter.isActive = isActive === 'true';
-    if (type) filter.type = type;
-    if (category) filter.category = category;
-    
-    const effects = await Effect.find(filter).sort({ name: 1 });
-    
-    // Group by type for better organization
-    const effectsByType = {
-      status: effects.filter(e => e.type === 'status'),
-      buff: effects.filter(e => e.type === 'buff'),
-      debuff: effects.filter(e => e.type === 'debuff'),
-      special: effects.filter(e => e.type === 'special')
-    };
-    
-    sendSuccessResponse(res, 200, { 
-      effects, 
-      effectsByType,
-      total: effects.length,
-      counts: {
-        status: effectsByType.status.length,
-        buff: effectsByType.buff.length,
-        debuff: effectsByType.debuff.length,
-        special: effectsByType.special.length
-      }
-    }, 'Lấy danh sách effects thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy danh sách effects', error);
-  }
-};
-
-// Lấy effect theo ID
-exports.getEffectById = async (req, res) => {
-  try {
-    const effect = await Effect.findById(req.params.id);
-    if (!effect) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy effect');
-    }
-    
-    // Get display info using the method
-    const displayInfo = effect.getDisplayInfo();
-    
-    sendSuccessResponse(res, 200, { 
-      effect,
-      displayInfo 
-    }, 'Lấy effect thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy effect', error);
-  }
-};
-
-// Cập nhật effect
-exports.updateEffect = async (req, res) => {
-  try {
-    const effect = await Effect.findById(req.params.id);
-    if (!effect) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy effect');
-    }
-
-    // Cập nhật các trường
-    Object.keys(req.body).forEach(key => {
-      if (key !== '_id' && key !== '__v' && key !== 'createdAt') {
-        effect[key] = req.body[key];
-      }
-    });
-
-    await effect.save();
-    
-    // Get updated display info
-    const displayInfo = effect.getDisplayInfo();
-    
-    sendSuccessResponse(res, 200, { 
-      effect,
-      displayInfo 
-    }, 'Cập nhật effect thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi cập nhật effect', error);
-  }
-};
-
-// Xóa effect (soft delete)
-exports.deleteEffect = async (req, res) => {
-  try {
-    const effect = await Effect.findById(req.params.id);
-    if (!effect) {
-      return sendErrorResponse(res, 404, 'Không tìm thấy effect');
-    }
-
-    // Check if effect is being used by any skills
-    const skillsUsingEffect = await Skill.find({
-      'effects.effect': effect._id
-    });
-
-    if (skillsUsingEffect.length > 0) {
-      return sendErrorResponse(res, 400, 
-        `Không thể xóa effect vì đang được sử dụng bởi ${skillsUsingEffect.length} skills`
-      );
-    }
-
-    effect.isActive = false;
-    await effect.save();
-
-    sendSuccessResponse(res, 200, {}, 'Xóa effect thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi xóa effect', error);
-  }
-};
-
-// Lấy effects theo type
-exports.getEffectsByType = async (req, res) => {
-  try {
-    const { type } = req.params;
-    const { isActive = true } = req.query;
-    
-    if (!['status', 'buff', 'debuff', 'special'].includes(type)) {
-      return sendErrorResponse(res, 400, 'Type không hợp lệ');
-    }
-    
-    const filter = { type, isActive: isActive === 'true' };
-    const effects = await Effect.find(filter).sort({ name: 1 });
-    
-    sendSuccessResponse(res, 200, { 
-      effects,
-      type,
-      total: effects.length
-    }, `Lấy danh sách ${type} effects thành công`);
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy effects theo type', error);
-  }
-};
-
-// Lấy effects theo category
-exports.getEffectsByCategory = async (req, res) => {
-  try {
-    const { category } = req.params;
-    const { isActive = true } = req.query;
-    
-    const filter = { category, isActive: isActive === 'true' };
-    const effects = await Effect.find(filter).sort({ name: 1 });
-    
-    sendSuccessResponse(res, 200, { 
-      effects,
-      category,
-      total: effects.length
-    }, `Lấy danh sách effects category ${category} thành công`);
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy effects theo category', error);
-  }
-};
-
-// Tìm kiếm effects
-exports.searchEffects = async (req, res) => {
-  try {
-    const { q, type, category, isActive = true } = req.query;
-    
-    const filter = { isActive: isActive === 'true' };
-    
-    // Text search
-    if (q) {
-      filter.$or = [
-        { name: { $regex: q, $options: 'i' } },
-        { displayName: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } }
-      ];
-    }
-    
-    // Type filter
-    if (type) filter.type = type;
-    
-    // Category filter
-    if (category) filter.category = category;
-    
-    const effects = await Effect.find(filter).sort({ name: 1 });
-    
-    sendSuccessResponse(res, 200, { 
-      effects,
-      query: q,
-      total: effects.length
-    }, 'Tìm kiếm effects thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi tìm kiếm effects', error);
-  }
-};
-
-// Lấy thống kê effects
-exports.getEffectStats = async (req, res) => {
-  try {
-    const stats = await Effect.aggregate([
-      {
-        $group: {
-          _id: '$type',
-          count: { $sum: 1 },
-          activeCount: {
-            $sum: { $cond: ['$isActive', 1, 0] }
-          }
-        }
-      }
-    ]);
-    
-    const categoryStats = await Effect.aggregate([
-      {
-        $group: {
-          _id: '$category',
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]);
-    
-    const totalEffects = await Effect.countDocuments();
-    const activeEffects = await Effect.countDocuments({ isActive: true });
-    
-    sendSuccessResponse(res, 200, {
-      stats: {
-        total: totalEffects,
-        active: activeEffects,
-        inactive: totalEffects - activeEffects
-      },
-      typeStats: stats,
-      categoryStats,
-      topCategories: categoryStats.slice(0, 5)
-    }, 'Lấy thống kê effects thành công');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi lấy thống kê effects', error);
-  }
-};
-
-// ==================== BULK OPERATIONS ====================
-
-// Tạo nhiều elements cùng lúc
-exports.createMultipleElements = async (req, res) => {
-  try {
-    const elements = req.body;
-
-    if (!Array.isArray(elements)) {
-      return sendErrorResponse(res, 400, 'Elements phải là một array');
-    }
-
-    const createdElements = [];
-    const errors = [];
-
-    for (const elementData of elements) {
-      try {
-        // Kiểm tra element đã tồn tại chưa
-        const existingElement = await Element.findOne({ name: elementData.name });
-        if (existingElement) {
-          errors.push(`Element "${elementData.name}" đã tồn tại`);
-          continue;
-        }
-
-        const element = new Element(elementData);
-        await element.save();
-        createdElements.push(element);
-      } catch (error) {
-        errors.push(`Lỗi khi tạo element "${elementData.name}": ${error.message}`);
-      }
-    }
-
-    sendSuccessResponse(res, 201, { 
-      createdElements, 
-      errors,
-      totalCreated: createdElements.length,
-      totalErrors: errors.length
-    }, 'Tạo elements hoàn tất');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi tạo multiple elements', error);
-  }
-};
-
-// Tạo nhiều rarities cùng lúc
-exports.createMultipleRarities = async (req, res) => {
-  try {
-    const rarities = req.body;
-
-    if (!Array.isArray(rarities)) {
-      return sendErrorResponse(res, 400, 'Rarities phải là một array');
-    }
-
-    const createdRarities = [];
-    const errors = [];
-
-    for (const rarityData of rarities) {
-      try {
-        // Kiểm tra rarity đã tồn tại chưa
-        const existingRarity = await Rarity.findOne({ name: rarityData.name });
-        if (existingRarity) {
-          errors.push(`Rarity "${rarityData.name}" đã tồn tại`);
-          continue;
-        }
-
-        const rarity = new Rarity(rarityData);
-        await rarity.save();
-        createdRarities.push(rarity);
-      } catch (error) {
-        errors.push(`Lỗi khi tạo rarity "${rarityData.name}": ${error.message}`);
-      }
-    }
-
-    sendSuccessResponse(res, 201, { 
-      createdRarities, 
-      errors,
-      totalCreated: createdRarities.length,
-      totalErrors: errors.length
-    }, 'Tạo rarities hoàn tất');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi tạo multiple rarities', error);
-  }
-};
-
-// Import rarities từ JSON
-exports.importRaritiesFromJson = async (req, res) => {
-  try {
-    const { rarities, clearExisting = false } = req.body;
-
-    if (!Array.isArray(rarities)) {
-      return sendErrorResponse(res, 400, 'Rarities phải là một array');
-    }
-
-    // Clear existing rarities if requested
-    if (clearExisting) {
-      await Rarity.deleteMany({});
-    }
-
-    const createdRarities = [];
-    const updatedRarities = [];
-    const errors = [];
-
-    for (const rarityData of rarities) {
-      try {
-        // Kiểm tra rarity đã tồn tại chưa
-        const existingRarity = await Rarity.findOne({ name: rarityData.name });
-        
-        if (existingRarity) {
-          // Update existing rarity
-          Object.keys(rarityData).forEach(key => {
-            if (key !== '_id' && key !== '__v' && key !== 'createdAt') {
-              existingRarity[key] = rarityData[key];
-            }
-          });
-          
-          await existingRarity.save();
-          updatedRarities.push(existingRarity);
-        } else {
-          // Create new rarity
-          const rarity = new Rarity(rarityData);
-          await rarity.save();
-          createdRarities.push(rarity);
-        }
-      } catch (error) {
-        errors.push(`Lỗi khi xử lý rarity "${rarityData.name}": ${error.message}`);
-      }
-    }
-
-    sendSuccessResponse(res, 200, { 
-      createdRarities,
-      updatedRarities,
-      errors,
-      totalCreated: createdRarities.length,
-      totalUpdated: updatedRarities.length,
-      totalErrors: errors.length
-    }, 'Import rarities hoàn tất');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi import rarities', error);
-  }
-};
-
-// Tạo nhiều effects cùng lúc
-exports.createMultipleEffects = async (req, res) => {
-  try {
-    const effects = req.body;
-
-    if (!Array.isArray(effects)) {
-      return sendErrorResponse(res, 400, 'Effects phải là một array');
-    }
-
-    const createdEffects = [];
-    const errors = [];
-
-    for (const effectData of effects) {
-      try {
-        // Kiểm tra effect đã tồn tại chưa
-        const existingEffect = await Effect.findOne({ name: effectData.name });
-        if (existingEffect) {
-          errors.push(`Effect "${effectData.name}" đã tồn tại`);
-          continue;
-        }
-
-        const effect = new Effect(effectData);
-        await effect.save();
-        createdEffects.push(effect);
-      } catch (error) {
-        errors.push(`Lỗi khi tạo effect "${effectData.name}": ${error.message}`);
-      }
-    }
-
-    sendSuccessResponse(res, 201, { 
-      createdEffects, 
-      errors,
-      totalCreated: createdEffects.length,
-      totalErrors: errors.length
-    }, 'Tạo effects hoàn tất');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi tạo multiple effects', error);
-  }
-};
-
-// Cập nhật nhiều effects cùng lúc
-exports.updateMultipleEffects = async (req, res) => {
-  try {
-    const { effects } = req.body;
-
-    if (!Array.isArray(effects)) {
-      return sendErrorResponse(res, 400, 'Effects phải là một array');
-    }
-
-    const updatedEffects = [];
-    const errors = [];
-
-    for (const effectUpdate of effects) {
-      try {
-        const { id, ...updateData } = effectUpdate;
-        
-        if (!id) {
-          errors.push('Thiếu ID cho effect');
-          continue;
-        }
-
-        const effect = await Effect.findById(id);
-        if (!effect) {
-          errors.push(`Không tìm thấy effect với ID: ${id}`);
-          continue;
-        }
-
-        // Cập nhật các trường
-        Object.keys(updateData).forEach(key => {
-          if (key !== '_id' && key !== '__v' && key !== 'createdAt') {
-            effect[key] = updateData[key];
-          }
+  /**
+   * Lấy chi tiết element theo ID
+   */
+  static async getElementById(req, res) {
+    try {
+      const { elementId } = req.params;
+
+      const element = await Element.findById(elementId);
+      if (!element) {
+        return res.status(404).json({
+          success: false,
+          message: 'Element không tồn tại'
         });
-
-        await effect.save();
-        updatedEffects.push(effect);
-      } catch (error) {
-        errors.push(`Lỗi khi cập nhật effect: ${error.message}`);
       }
-    }
 
-    sendSuccessResponse(res, 200, { 
-      updatedEffects, 
-      errors,
-      totalUpdated: updatedEffects.length,
-      totalErrors: errors.length
-    }, 'Cập nhật effects hoàn tất');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi cập nhật multiple effects', error);
+      res.json({
+        success: true,
+        data: element,
+        message: 'Lấy chi tiết element thành công'
+      });
+    } catch (error) {
+      console.error('Get element by ID error:', error);
+      
+      // Xử lý CastError (invalid ObjectId)
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          success: false,
+          message: 'ID element không hợp lệ'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy chi tiết element',
+        error: error.message
+      });
+    }
   }
-};
 
-// Import effects từ JSON
-exports.importEffectsFromJson = async (req, res) => {
-  try {
-    const { effects, clearExisting = false } = req.body;
+  /**
+   * Lấy danh sách tất cả rarities
+   */
+  static async getRarities(req, res) {
+    try {
+      const rarities = await Rarity.find({}).sort({ dropRate: 1 });
 
-    if (!Array.isArray(effects)) {
-      return sendErrorResponse(res, 400, 'Effects phải là một array');
+      res.json({
+        success: true,
+        data: rarities,
+        message: 'Lấy danh sách rarities thành công'
+      });
+    } catch (error) {
+      console.error('Get rarities error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách rarities',
+        error: error.message
+      });
     }
+  }
 
-    // Clear existing effects if requested
-    if (clearExisting) {
-      await Effect.deleteMany({});
+  /**
+   * Lấy chi tiết rarity theo ID
+   */
+  static async getRarityById(req, res) {
+    try {
+      const { rarityId } = req.params;
+
+      const rarity = await Rarity.findById(rarityId);
+      if (!rarity) {
+        return res.status(404).json({
+          success: false,
+          message: 'Rarity không tồn tại'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: rarity,
+        message: 'Lấy chi tiết rarity thành công'
+      });
+    } catch (error) {
+      console.error('Get rarity by ID error:', error);
+      
+      // Xử lý CastError (invalid ObjectId)
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          success: false,
+          message: 'ID rarity không hợp lệ'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy chi tiết rarity',
+        error: error.message
+      });
     }
+  }
 
-    const createdEffects = [];
-    const updatedEffects = [];
-    const errors = [];
+  /**
+   * Lấy danh sách skills
+   */
+  static async getSkills(req, res) {
+    try {
+      const { type, page = 1, limit = 20 } = req.query;
+      
+      const skip = (page - 1) * limit;
+      
+      let query = {};
+      if (type) query.type = type;
 
-    for (const effectData of effects) {
-      try {
-        // Kiểm tra effect đã tồn tại chưa
-        const existingEffect = await Effect.findOne({ name: effectData.name });
+      const skills = await Skill.find(query)
+        .populate('effects.effect', 'name displayName type category')
+        .skip(skip)
+        .limit(parseInt(limit))
+        .sort({ name: 1 });
+
+      const total = await Skill.countDocuments(query);
+
+      res.json({
+        success: true,
+        data: {
+          skills,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            pages: Math.ceil(total / limit)
+          }
+        },
+        message: 'Lấy danh sách skills thành công'
+      });
+    } catch (error) {
+      console.error('Get skills error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách skills',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy chi tiết skill theo ID
+   */
+  static async getSkillById(req, res) {
+    try {
+      const { skillId } = req.params;
+
+      const skill = await Skill.findById(skillId)
+        .populate('effects.effect', 'name displayName type category parameters targetType range conditions stacking resistance visualEffects');
+
+      if (!skill) {
+        return res.status(404).json({
+          success: false,
+          message: 'Skill không tồn tại'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: skill,
+        message: 'Lấy chi tiết skill thành công'
+      });
+    } catch (error) {
+      console.error('Get skill by ID error:', error);
+      
+      // Xử lý CastError (invalid ObjectId)
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          success: false,
+          message: 'ID skill không hợp lệ'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy chi tiết skill',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy danh sách effects
+   */
+  static async getEffects(req, res) {
+    try {
+      const { type, category, page = 1, limit = 20 } = req.query;
+      
+      const skip = (page - 1) * limit;
+      
+      let query = {};
+      if (type) query.type = type;
+      if (category) query.category = category;
+
+      const effects = await Effect.find(query)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .sort({ name: 1 });
+
+      const total = await Effect.countDocuments(query);
+
+      res.json({
+        success: true,
+        data: {
+          effects,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            pages: Math.ceil(total / limit)
+          }
+        },
+        message: 'Lấy danh sách effects thành công'
+      });
+    } catch (error) {
+      console.error('Get effects error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách effects',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy chi tiết effect theo ID
+   */
+  static async getEffectById(req, res) {
+    try {
+      const { effectId } = req.params;
+
+      const effect = await Effect.findById(effectId);
+      if (!effect) {
+        return res.status(404).json({
+          success: false,
+          message: 'Effect không tồn tại'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: effect,
+        message: 'Lấy chi tiết effect thành công'
+      });
+    } catch (error) {
+      console.error('Get effect by ID error:', error);
+      
+      // Xử lý CastError (invalid ObjectId)
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          success: false,
+          message: 'ID effect không hợp lệ'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy chi tiết effect',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy tất cả game constants
+   */
+  static async getGameConstants(req, res) {
+    try {
+      const constants = {
+        level: LEVEL_CONSTANTS,
+        pet: PET_CONSTANTS,
+        battle: BATTLE_CONSTANTS,
+        formation: FORMATION_CONSTANTS,
+        skill: SKILL_CONSTANTS,
+        item: ITEM_CONSTANTS,
+        inventory: INVENTORY_CONSTANTS,
+        equipment: EQUIPMENT_CONSTANTS,
+        bag: BAG_CONSTANTS,
+        currency: CURRENCY_CONSTANTS,
+        baseElementEffectiveness: BASE_ELEMENT_EFFECTIVENESS,
+        baseRarityMultipliers: BASE_RARITY_MULTIPLIERS
+      };
+
+      res.json({
+        success: true,
+        data: constants,
+        message: 'Lấy game constants thành công'
+      });
+    } catch (error) {
+      console.error('Get game constants error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy game constants',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy element effectiveness matrix (base data)
+   */
+  static async getElementEffectiveness(req, res) {
+    try {
+      res.json({
+        success: true,
+        data: BASE_ELEMENT_EFFECTIVENESS,
+        message: 'Lấy base element effectiveness matrix thành công'
+      });
+    } catch (error) {
+      console.error('Get element effectiveness error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy element effectiveness matrix',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy tất cả dữ liệu game cơ bản (hybrid approach)
+   */
+  static async getAllGameData(req, res) {
+    try {
+      // Lấy dynamic data từ database
+      const [elements, rarities, skills, effects] = await Promise.all([
+        Element.find({}).sort({ name: 1 }),
+        Rarity.find({}).sort({ dropRate: 1 }),
+        Skill.find({}).sort({ name: 1 }).limit(50), // Limit để tránh quá tải
+        Effect.find({}).sort({ name: 1 }).limit(50)
+      ]);
+
+      // Static constants từ code
+      const gameData = {
+        // Dynamic data từ database
+        elements,
+        rarities,
+        skills,
+        effects,
         
-        if (existingEffect) {
-          // Update existing effect
-          Object.keys(effectData).forEach(key => {
-            if (key !== '_id' && key !== '__v' && key !== 'createdAt') {
-              existingEffect[key] = effectData[key];
-            }
-          });
-          
-          await existingEffect.save();
-          updatedEffects.push(existingEffect);
-        } else {
-          // Create new effect
-          const effect = new Effect(effectData);
-          await effect.save();
-          createdEffects.push(effect);
+        // Static constants từ code
+        constants: {
+          level: LEVEL_CONSTANTS,
+          pet: PET_CONSTANTS,
+          battle: BATTLE_CONSTANTS,
+          formation: FORMATION_CONSTANTS,
+          skill: SKILL_CONSTANTS,
+          item: ITEM_CONSTANTS,
+          inventory: INVENTORY_CONSTANTS,
+          equipment: EQUIPMENT_CONSTANTS,
+          bag: BAG_CONSTANTS,
+          currency: CURRENCY_CONSTANTS,
+          baseElementEffectiveness: BASE_ELEMENT_EFFECTIVENESS,
+          baseRarityMultipliers: BASE_RARITY_MULTIPLIERS
         }
-      } catch (error) {
-        errors.push(`Lỗi khi xử lý effect "${effectData.name}": ${error.message}`);
-      }
-    }
+      };
 
-    sendSuccessResponse(res, 200, { 
-      createdEffects,
-      updatedEffects,
-      errors,
-      totalCreated: createdEffects.length,
-      totalUpdated: updatedEffects.length,
-      totalErrors: errors.length
-    }, 'Import effects hoàn tất');
-  } catch (error) {
-    sendErrorResponse(res, 500, 'Lỗi khi import effects', error);
+      res.json({
+        success: true,
+        data: gameData,
+        message: 'Lấy tất cả game data thành công'
+      });
+    } catch (error) {
+      console.error('Get all game data error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy game data',
+        error: error.message
+      });
+    }
   }
-}; 
+
+  /**
+   * Lấy thông tin về element effectiveness giữa 2 elements
+   */
+  static async getElementEffectivenessBetween(req, res) {
+    try {
+      const { element1Id, element2Id } = req.params;
+
+      const [element1, element2] = await Promise.all([
+        Element.findById(element1Id),
+        Element.findById(element2Id)
+      ]);
+
+      if (!element1 || !element2) {
+        return res.status(404).json({
+          success: false,
+          message: 'Element không tồn tại'
+        });
+      }
+
+      // Sử dụng static constants thay vì database methods
+      const multiplier = getElementEffectiveness(element1.name, element2.name);
+      const effectivenessLevel = multiplier > 1.0 ? 'strong' : multiplier < 1.0 ? 'weak' : 'normal';
+      const isStrong = multiplier > 1.0;
+      const isWeak = multiplier < 1.0;
+
+      const result = {
+        attacker: {
+          id: element1._id,
+          name: element1.name,
+          displayName: element1.displayName
+        },
+        defender: {
+          id: element2._id,
+          name: element2.name,
+          displayName: element2.displayName
+        },
+        effectiveness: {
+          multiplier,
+          level: effectivenessLevel,
+          isStrong,
+          isWeak
+        }
+      };
+
+      res.json({
+        success: true,
+        data: result,
+        message: 'Lấy thông tin element effectiveness thành công'
+      });
+    } catch (error) {
+      console.error('Get element effectiveness between error:', error);
+      
+      // Xử lý CastError (invalid ObjectId)
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          success: false,
+          message: 'ID element không hợp lệ'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy thông tin element effectiveness',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy danh sách skill types
+   */
+  static async getSkillTypes(req, res) {
+    try {
+      const skillTypes = [
+        { value: 'normal', label: 'Normal Skill', description: 'Kỹ năng cơ bản' },
+        { value: 'ultimate', label: 'Ultimate Skill', description: 'Kỹ năng tối thượng' },
+        { value: 'passive', label: 'Passive Skill', description: 'Kỹ năng thụ động' }
+      ];
+
+      res.json({
+        success: true,
+        data: skillTypes,
+        message: 'Lấy danh sách skill types thành công'
+      });
+    } catch (error) {
+      console.error('Get skill types error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách skill types',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy danh sách effect types
+   */
+  static async getEffectTypes(req, res) {
+    try {
+      const effectTypes = [
+        { value: 'status', label: 'Status Effect', description: 'Hiệu ứng trạng thái' },
+        { value: 'buff', label: 'Buff', description: 'Hiệu ứng tăng cường' },
+        { value: 'debuff', label: 'Debuff', description: 'Hiệu ứng giảm yếu' },
+        { value: 'special', label: 'Special Effect', description: 'Hiệu ứng đặc biệt' }
+      ];
+
+      res.json({
+        success: true,
+        data: effectTypes,
+        message: 'Lấy danh sách effect types thành công'
+      });
+    } catch (error) {
+      console.error('Get effect types error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách effect types',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy danh sách effect categories
+   */
+  static async getEffectCategories(req, res) {
+    try {
+      const effectCategories = [
+        { value: 'stun', label: 'Stun', description: 'Choáng' },
+        { value: 'poison', label: 'Poison', description: 'Độc' },
+        { value: 'burn', label: 'Burn', description: 'Bỏng' },
+        { value: 'freeze', label: 'Freeze', description: 'Đóng băng' },
+        { value: 'heal', label: 'Heal', description: 'Hồi máu' },
+        { value: 'shield', label: 'Shield', description: 'Khiên' },
+        { value: 'speed_up', label: 'Speed Up', description: 'Tăng tốc' },
+        { value: 'speed_down', label: 'Speed Down', description: 'Giảm tốc' },
+        { value: 'attack_up', label: 'Attack Up', description: 'Tăng tấn công' },
+        { value: 'attack_down', label: 'Attack Down', description: 'Giảm tấn công' },
+        { value: 'defense_up', label: 'Defense Up', description: 'Tăng phòng thủ' },
+        { value: 'defense_down', label: 'Defense Down', description: 'Giảm phòng thủ' }
+      ];
+
+      res.json({
+        success: true,
+        data: effectCategories,
+        message: 'Lấy danh sách effect categories thành công'
+      });
+    } catch (error) {
+      console.error('Get effect categories error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi lấy danh sách effect categories',
+        error: error.message
+      });
+    }
+  }
+}
+
+module.exports = GameDataController; 

@@ -1,222 +1,227 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
-  email: { type: String, unique: true, required: true },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' },
-  
-  // Game currency
-  coins: { type: Number, default: 1000 }, // Tiền trong game
-  gems: { type: Number, default: 50 }, // Đá quý (premium currency)
-  
-  // Game progress
-  score: { type: Number, default: 0 }, // Điểm tổng
-  hasChosenStarterPet: { type: Boolean, default: false }, // Đã chọn starter pet chưa
-  
-  // Battle stats tổng hợp
-  totalBattlesWon: { type: Number, default: 0 },
-  totalBattlesLost: { type: Number, default: 0 },
-  totalDamageDealt: { type: Number, default: 0 },
-  totalDamageTaken: { type: Number, default: 0 },
-  
-  // Thông tin profile
-  avatar: { type: String, default: null },
-  bio: { type: String, default: '' },
-  
-  // Cài đặt game
-  settings: {
-    soundEnabled: { type: Boolean, default: true },
-    musicEnabled: { type: Boolean, default: true },
-    notificationsEnabled: { type: Boolean, default: true }
+  // ==================== BASIC INFO ====================
+  username: { 
+    type: String, 
+    required: true,
+    unique: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 20,
+    match: /^[a-zA-Z0-9_]+$/ // Chỉ cho phép chữ cái, số và dấu gạch dưới
+  },
+  password: { 
+    type: String, 
+    required: true,
+    minlength: 6
+  },
+  email: { 
+    type: String, 
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  },
+  role: { 
+    type: String, 
+    enum: ['user', 'admin'], 
+    default: 'user' 
   },
   
-  // Timestamps
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: { type: Date, default: Date.now },
-  isActive: { type: Boolean, default: true }
+  // ==================== PROFILE INFO ====================
+  displayName: { 
+    type: String, 
+    trim: true,
+    maxlength: 30,
+    default: function() { return this.username; }
+  },
+  avatar: { 
+    type: String, 
+    default: null 
+  },
+  bio: { 
+    type: String, 
+    maxlength: 500,
+    default: '' 
+  },
+  
+  // ==================== ACCOUNT STATUS ====================
+  isActive: { 
+    type: Boolean, 
+    default: true 
+  },
+  isVerified: { 
+    type: Boolean, 
+    default: false 
+  },
+  isBanned: { 
+    type: Boolean, 
+    default: false 
+  },
+  banReason: { 
+    type: String, 
+    default: null 
+  },
+  banExpiresAt: { 
+    type: Date, 
+    default: null 
+  },
+  
+  // ==================== LOGIN INFO ====================
+  lastLogin: { 
+    type: Date, 
+    default: Date.now 
+  },
+  lastLoginIp: { 
+    type: String, 
+    default: null 
+  },
+  
+  // ==================== TIMESTAMPS ====================
+  createdAt: { 
+    type: Date, 
+    default: Date.now 
+  },
+  updatedAt: { 
+    type: Date, 
+    default: Date.now 
+  }
 });
 
-// Virtual để lấy danh sách linh thú của user (sẽ được populate)
-userSchema.virtual('pets', {
-  ref: 'UserPet',
-  localField: '_id',
-  foreignField: 'user'
-});
+// ==================== VIRTUAL FIELDS ====================
 
-// Virtual để lấy pets trong bag
-userSchema.virtual('bagPets', {
-  ref: 'UserPet',
-  localField: '_id',
-  foreignField: 'user',
-  match: { location: 'bag' }
-});
-
-// Virtual để lấy pets trong storage
-userSchema.virtual('storagePets', {
-  ref: 'UserPet',
-  localField: '_id',
-  foreignField: 'user',
-  match: { location: 'storage' }
-});
-
-// Virtual để lấy thông tin túi của user
-userSchema.virtual('bag', {
-  ref: 'UserBag',
+// Virtual để lấy UserStats
+userSchema.virtual('stats', {
+  ref: 'UserStats',
   localField: '_id',
   foreignField: 'user',
   justOne: true
 });
 
-// Method để lấy tổng số pets
-userSchema.methods.getTotalPets = async function() {
-  const UserPet = require('./UserPet');
-  return await UserPet.countDocuments({ user: this._id });
+// ==================== BASIC METHODS ====================
+
+/**
+ * Hash password trước khi save
+ */
+userSchema.methods.hashPassword = async function() {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 12);
+  }
 };
 
-// Method để lấy pets trong bag
-userSchema.methods.getBagPets = async function() {
-  const UserPet = require('./UserPet');
-  return await UserPet.find({ user: this._id, location: 'bag' })
-    .populate({
-      path: 'pet',
-      populate: ['element', 'rarity']
-    });
+/**
+ * So sánh password
+ */
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method để lấy pets trong storage
-userSchema.methods.getStoragePets = async function() {
-  const UserPet = require('./UserPet');
-  return await UserPet.find({ user: this._id, location: 'storage' })
-    .populate({
-      path: 'pet',
-      populate: ['element', 'rarity']
-    });
-};
-
-// Method để lấy pet mạnh nhất
-userSchema.methods.getStrongestPet = async function() {
-  const UserPet = require('./UserPet');
-  return await UserPet.findOne({ user: this._id })
-    .sort({ actualCombatPower: -1 })
-    .populate({
-      path: 'pet',
-      populate: ['element', 'rarity']
-    });
-};
-
-// Method để lấy thống kê pets
-userSchema.methods.getPetStats = async function() {
-  const UserPet = require('./UserPet');
+/**
+ * Lấy thông tin đầy đủ của user (bao gồm stats)
+ */
+userSchema.methods.getFullInfo = async function() {
+  await this.populate('stats');
   
-  const totalPets = await UserPet.countDocuments({ user: this._id });
-  const bagPets = await UserPet.countDocuments({ user: this._id, location: 'bag' });
-  const storagePets = await UserPet.countDocuments({ user: this._id, location: 'storage' });
-  
-  // Get highest level pet
-  const highestLevelPet = await UserPet.findOne({ user: this._id })
-    .sort({ level: -1 })
-    .populate('pet');
-  
-  // Get pets by rarity
-  const petsByRarity = await UserPet.aggregate([
-    { $match: { user: this._id } },
-    { $lookup: { from: 'pets', localField: 'pet', foreignField: '_id', as: 'petData' } },
-    { $unwind: '$petData' },
-    { $lookup: { from: 'rarities', localField: 'petData.rarity', foreignField: '_id', as: 'rarityData' } },
-    { $unwind: '$rarityData' },
-    { $group: { _id: '$rarityData.name', count: { $sum: 1 } } }
-  ]);
+  // Nếu chưa có stats, tạo mới
+  if (!this.stats) {
+    const UserStats = require('./UserStats');
+    this.stats = await UserStats.create({ user: this._id });
+  }
   
   return {
-    totalPets,
-    bagPets,
-    storagePets,
-    highestLevel: highestLevelPet?.level || 0,
-    highestLevelPet: highestLevelPet?.pet?.name || null,
-    petsByRarity
+    _id: this._id,
+    username: this.username,
+    email: this.email,
+    role: this.role,
+    displayName: this.displayName,
+    avatar: this.avatar,
+    bio: this.bio,
+    isActive: this.isActive,
+    isVerified: this.isVerified,
+    isBanned: this.isBanned,
+    lastLogin: this.lastLogin,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt,
+    stats: this.stats
   };
 };
 
-// Method để kiểm tra có thể nhận pet mới không
-userSchema.methods.canReceivePet = async function() {
-  const UserBag = require('./UserBag');
-  const bag = await UserBag.findOne({ user: this._id });
+/**
+ * Lấy thông tin tóm tắt của user
+ */
+userSchema.methods.getSummary = async function() {
+  await this.populate('stats');
   
-  if (!bag) return true; // Chưa có bag, có thể nhận pet
+  // Nếu chưa có stats, tạo mới
+  if (!this.stats) {
+    const UserStats = require('./UserStats');
+    this.stats = await UserStats.create({ user: this._id });
+  }
   
-  return bag.canAddPet();
+  return {
+    _id: this._id,
+    username: this.username,
+    displayName: this.displayName,
+    avatar: this.avatar,
+    role: this.role,
+    isActive: this.isActive,
+    lastLogin: this.lastLogin,
+    stats: this.stats.getSummary()
+  };
 };
 
-// Method để thêm pet vào bag
-userSchema.methods.addPetToBag = async function(petId) {
-  const UserPet = require('./UserPet');
-  const UserBag = require('./UserBag');
-  
-  // Check if user can receive pet
-  if (!(await this.canReceivePet())) {
-    throw new Error('Bag is full');
-  }
-  
-  // Create UserPet
-  const userPet = new UserPet({
-    user: this._id,
-    pet: petId,
-    location: 'bag'
-  });
-  
-  await userPet.save();
-  
-  // Update bag size
-  const bag = await UserBag.findOne({ user: this._id });
-  if (bag) {
-    bag.currentSize += 1;
-    await bag.save();
-  }
-  
-  return userPet;
-};
+// ==================== MIDDLEWARE ====================
 
-// Method để di chuyển pet giữa bag và storage
-userSchema.methods.movePet = async function(userPetId, newLocation) {
-  const UserPet = require('./UserPet');
-  const UserBag = require('./UserBag');
+// Pre-save middleware
+userSchema.pre('save', async function(next) {
+  this.updatedAt = new Date();
   
-  const userPet = await UserPet.findOne({ _id: userPetId, user: this._id });
-  if (!userPet) {
-    throw new Error('Pet not found');
+  // Hash password nếu có thay đổi
+  if (this.isModified('password')) {
+    await this.hashPassword();
   }
   
-  const oldLocation = userPet.location;
-  userPet.location = newLocation;
-  await userPet.save();
-  
-  // Update bag size if moving to/from bag
-  const bag = await UserBag.findOne({ user: this._id });
-  if (bag) {
-    if (oldLocation === 'bag' && newLocation === 'storage') {
-      bag.currentSize -= 1;
-    } else if (oldLocation === 'storage' && newLocation === 'bag') {
-      if (!bag.canAddPet()) {
-        throw new Error('Bag is full');
-      }
-      bag.currentSize += 1;
-    }
-    await bag.save();
+  // Tự động set displayName nếu chưa có
+  if (!this.displayName) {
+    this.displayName = this.username;
   }
   
-  return userPet;
-};
+  next();
+});
+
+// ==================== INDEXES ====================
+
+// Performance indexes
+userSchema.index({ role: 1 });
+userSchema.index({ isActive: 1 });
+userSchema.index({ isBanned: 1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ lastLogin: -1 });
+
+// Text search index
+userSchema.index({ 
+  username: 'text', 
+  displayName: 'text', 
+  bio: 'text' 
+});
+
+// ==================== SCHEMA OPTIONS ====================
 
 // Đảm bảo virtual fields được include khi convert to JSON
-userSchema.set('toJSON', { virtuals: true });
-userSchema.set('toObject', { virtuals: true });
+userSchema.set('toJSON', { 
+  virtuals: true,
+  transform: function(doc, ret) {
+    delete ret.password;
+    return ret;
+  }
+});
 
-// Index để tối ưu truy vấn
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
-userSchema.index({ role: 1 });
-userSchema.index({ score: -1 });
-userSchema.index({ createdAt: -1 });
+// Đảm bảo virtual fields được include khi convert to Object
+userSchema.set('toObject', { 
+  virtuals: true 
+});
 
 module.exports = mongoose.model('User', userSchema); 
